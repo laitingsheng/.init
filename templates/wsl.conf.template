@@ -1,0 +1,13 @@
+[automount]
+enabled = true
+root = /mnt/
+options = "fmask=0133,dmask=0022"
+mountFsTab = true
+
+[network]
+generateHosts = true
+generateResolvConf = true
+
+[interop]
+enabled = true
+appendWindowsPath = %INTEROP_APPEND_WINDOWS_PATH%
