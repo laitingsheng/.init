@@ -1,0 +1,5 @@
+ubuntu:bionic:
+  image:
+    name: ubuntu:bionic
+  script:
+    - bash ./ubuntu-base.sh -d bionic -l us -u $(whoami)

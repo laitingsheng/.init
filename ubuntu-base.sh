@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 
-source utils.sh || exit $?
+# exit on error & prevent unset variable
+set -eu
+
+# source the common file
+source utils.sh
 
 # check if current is root
-if [[ $EUID -ne 0 ]]
+if [ $EUID -ne 0 ]
 then
 	warning_echo "This script must be run as root, use 'sudo $0$([ ! -z "$*" ] && printf " $*")' instead"
 	exit 126
