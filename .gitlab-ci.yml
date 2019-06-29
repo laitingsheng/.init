@@ -1,5 +1,18 @@
-ubuntu:bionic:
-  image:
-    name: ubuntu:bionic
+ubuntu:base:
+  stage: test
+  image: ubuntu:bionic
   script:
-    - bash ./ubuntu-base.sh -d bionic -l us -u $(whoami)
+    - bash ./ubuntu.base.sh -d bionic -l us -u $(whoami)
+  only:
+    changes:
+      - ubuntu.base.sh
+
+ubuntu:desktop:
+  stage: test
+  image: ubuntu:bionic
+  script:
+    - bash ./ubuntu.desktop.sh -d bionic -l us -u $(whoami)
+  only:
+    changes:
+      - ubuntu.base.sh
+      - ubuntu.desktop.sh
