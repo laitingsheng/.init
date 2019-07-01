@@ -12,12 +12,12 @@ source utils.sh
 # check if current is root
 if [ $EUID -ne 0 ]
 then
-	warning_echo "This script must be run as root, use 'sudo $0$([ ! -z "$*" ] && printf " $*")' instead"
-	exit 126
+    warning_echo "This script must be run as root, use 'sudo $0$([ ! -z "$*" ] && printf " $*")' instead"
+    exit 126
 fi
 
 print_usage() {
-	echo "Usage: (sudo) $0 [-d distribution] [-l location] [-u user]"
+    echo "Usage: (sudo) $0 [-d distribution] [-l location] [-u user]"
 }
 
 # default settings
@@ -28,35 +28,35 @@ win_path='false'
 # parse options
 while getopts ":d:l:u:w" opt
 do
-	case $opt in
-		d )
-			dist=$OPTARG
-			;;
-		l )
-			loc=$OPTARG
-			;;
-		u )
-			user=$OPTARG
-			id -u $user &> /dev/null
-			if [ $? -ne 0 ]
-			then
-				warning_echo "'$user' is an invalid user name"
-				exit 1
-			fi
-			;;
-		w )
-			win_path='true'
-			;;
-		\? )
-			print_usage
-			exit 0
-			;;
-		: )
-			warning_echo "'-$OPTARG' requires an argument"
-			print_usage
-			exit 1
-			;;
-	esac
+    case $opt in
+        d )
+            dist=$OPTARG
+            ;;
+        l )
+            loc=$OPTARG
+            ;;
+        u )
+            user=$OPTARG
+            id -u $user &> /dev/null
+            if [ $? -ne 0 ]
+            then
+                warning_echo "'$user' is an invalid user name"
+                exit 1
+            fi
+            ;;
+        w )
+            win_path='true'
+            ;;
+        \? )
+            print_usage
+            exit 0
+            ;;
+        : )
+            warning_echo "'-$OPTARG' requires an argument"
+            print_usage
+            exit 1
+            ;;
+    esac
 done
 
 [ -z $user ] && warning_echo "user was not set" && exit 1
@@ -64,10 +64,10 @@ done
 # WSL only
 if uname -a | grep -q Microsoft
 then
-	# add wsl.conf to /etc/ for customised configuration
-	info_echo "Adding wsl.conf to /etc/"
-	install -o root -g root -m 644 templates/wsl.conf.template /etc/wsl.conf
-	sed -i "s/%INTEROP_APPEND_WINDOWS_PATH%/$win_path/" /etc/wsl.conf
+    # add wsl.conf to /etc/ for customised configuration
+    info_echo "Adding wsl.conf to /etc/"
+    install -o root -g root -m 644 templates/wsl.conf.template /etc/wsl.conf
+    sed -i "s/%INTEROP_APPEND_WINDOWS_PATH%/$win_path/" /etc/wsl.conf
 fi
 
 # generate sources.list from template
@@ -96,15 +96,15 @@ apt-get purge lxd lxd-client snapd -y
 
 if [ -d ~$user ]
 then
-	# clone repo for nano syntax highlight
-	info_echo "Cloning nano rc repo"
-	git clone https://github.com/scopatz/nanorc.git ~$user/.nano
-	chown -R $user:$user .nano
-	chmod -R go-w ~$user/.nano
-	ln -s ~$user/.nano/nanorc ~$user/.nanorc
-	chmod $user:$user ~$user/.nanorc
+    # clone repo for nano syntax highlight
+    info_echo "Cloning nano rc repo"
+    git clone https://github.com/scopatz/nanorc.git ~$user/.nano
+    chown -R $user:$user .nano
+    chmod -R go-w ~$user/.nano
+    ln -s ~$user/.nano/nanorc ~$user/.nanorc
+    chmod $user:$user ~$user/.nanorc
 else
-	warning_echo "'$user' does not have home directory, ignoring step to download nanorc"
+    info_echo "'$user' does not have home directory, ignoring step to download nanorc"
 fi
 
 info_echo "Script finalised"

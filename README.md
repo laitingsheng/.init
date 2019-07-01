@@ -1,1 +1,1 @@
-# Initialisation ![GitLab CI](https://gitlab.com/laitingsheng/init/badges/master/pipeline.svg)
+# Initialisation [![GitLab CI](https://gitlab.com/laitingsheng/init/badges/master/pipeline.svg)](https://gitlab.com/laitingsheng/init) [![CircleCI](https://circleci.com/gh/laitingsheng/Init/tree/master.svg?style=svg)](https://github.com/laitingsheng/Init)

@@ -15,7 +15,7 @@ echo "deb https://download.docker.com/linux/ubuntu $dist stable" >> /etc/apt/sou
 
 # official Ansible repo
 info_echo "Adding Ansible PPA"
-add-apt-repository ppa:ansible/ansible
+add-apt-repository -uy ppa:ansible/ansible
 
 info_echo "Installing Docker & Ansible"
 apt-get install -y ansible docker-ce docker-ce-cli containerd.io

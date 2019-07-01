@@ -1,0 +1,34 @@
+version: 2
+jobs:
+  ubuntu:base:
+    docker:
+      - image: ubuntu:bionic
+    steps:
+      - checkout
+      - run:
+          name: Initialise
+          command: |
+            bash ubuntu.base.sh -d bionic -l us -u $(whoami)
+            bash ubuntu.base.test.sh
+  ubuntu:desktop:
+    docker:
+      - image: ubuntu:bionic
+    steps:
+      - checkout
+      - run:
+          name: Initialise
+          command: |
+            bash ubuntu.desktop.sh -d bionic -l us -u $(whoami)
+            bash ubuntu.desktop.test.sh
+workflows:
+  version: 2
+  multiple-tests:
+    jobs:
+      - ubuntu:base:
+          filters:
+            branches:
+              only: master
+      - ubuntu:desktop:
+          filters:
+            branches:
+              only: master
