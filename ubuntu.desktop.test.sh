@@ -6,7 +6,7 @@ set -e
 source ubuntu.base.test.sh
 
 # test Boost Library
-[ `ldconfig -p | grep -P 'libboost_\w*?\.so\.[\d\.]+' | wc -l` -eq 44 ]
+ldconfig -p | grep -P 'libboost_\w*?\.so\.[\d\.]+'
 
 while read cmd
 do
@@ -22,7 +22,6 @@ ghc
 stack
 docker
 docker-compose
-docker-machine
 ansible
 EOL
 

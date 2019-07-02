@@ -12,9 +12,11 @@ ubuntu:desktop:
   image: ubuntu:bionic
   script:
     - bash ubuntu.desktop.sh -d bionic -l us -u $(whoami)
+    - bash ubuntu.desktop.test.sh
   only:
     changes:
       - ubuntu.base.sh
       - ubuntu.base.test.sh
       - ubuntu.desktop.sh
       - ubuntu.desktop.test.sh
+      - conda/*.yml

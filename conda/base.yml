@@ -3,12 +3,6 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - anaconda
-  - anaconda-client
-  - anaconda-navigator
-  - anaconda-project
-  - astroid
-  - astropy
   - atomicwrites
   - automat
   - autopep8
@@ -30,6 +24,7 @@ dependencies:
   - dask
   - dask-core
   - datashape
+  - docker-compose
   - docutils
   - flask
   - flask-cors
