@@ -1,7 +1,8 @@
-name: base
+name: MLNN3
 channels:
   - defaults
   - conda-forge
+  - pytorch
 dependencies:
   - atomicwrites
   - automat
@@ -15,10 +16,6 @@ dependencies:
   - bokeh
   - bzip2
   - cffi
-  - conda
-  - conda-build
-  - conda-env
-  - conda-verify
   - cython
   - cytoolz
   - dask
@@ -42,11 +39,14 @@ dependencies:
   - ipywidgets
   - isort
   - jpeg
-  - jupyter
-  - jupyterlab
   - jupyter_contrib_nbextensions
+  - keras-applications
+  - keras-gpu
+  - keras-base
+  - keras-preprocessing
   - libarchive
   - libcurl
+  - libgpuarray
   - libiconv
   - libpng
   - libssh2
@@ -68,10 +68,6 @@ dependencies:
   - multipledispatch
   - mypy
   - mypy_extensions
-  - navigator-updater
-  - nb_anacondacloud
-  - nb_conda
-  - nb_conda_kernels
   - nbbrowserpdf
   - nbconvert
   - nbformat
@@ -91,32 +87,25 @@ dependencies:
   - pandoc
   - pandocfilters
   - pathlib2
-  - pefile
   - pep8
   - pep8-naming
-  - pexpect
   - pillow
   - pip
   - psutil
   - pycodestyle
   - pycrypto
   - pycurl
+  - pygpu
   - pylint
   - pyodbc
   - pyopenssl
   - pyparsing
-  - pyside
   - pysocks
   - pytables
-  - pytest
-  - pytest-arraydiff
-  - pytest-astropy
-  - pytest-doctestplus
-  - pytest-openfiles
-  - pytest-remotedata
   - python
   - python-dateutil
   - python-libarchive-c
+  - pytorch
   - pyyaml
   - pyzmq
   - requests
@@ -141,8 +130,13 @@ dependencies:
   - spyder-kernels
   - statsmodels
   - sympy
+  - tensorboard
+  - tensorflow
+  - tensorflow-base
+  - tensorflow-gpu
   - theano
   - tk
+  - torchvision
   - tqdm
   - typed-ast
   - typing

@@ -43,10 +43,12 @@ dependencies:
   - jpeg
   - jupyter_contrib_nbextensions
   - keras-applications
+  - keras-gpu
   - keras-base
   - keras-preprocessing
   - libarchive
   - libcurl
+  - libgpuarray
   - libiconv
   - libpng
   - libssh2
@@ -95,22 +97,17 @@ dependencies:
   - pycodestyle
   - pycrypto
   - pycurl
+  - pygpu
   - pylint
   - pyodbc
   - pyopenssl
   - pyparsing
   - pysocks
   - pytables
-  - pytest
-  - pytest-arraydiff
-  - pytest-astropy
-  - pytest-doctestplus
-  - pytest-openfiles
-  - pytest-remotedata
   - python
   - python-dateutil
   - python-libarchive-c
-  - pytorch-cpu
+  - pytorch
   - pyyaml
   - pyzmq
   - requests
@@ -138,9 +135,10 @@ dependencies:
   - tensorboard
   - tensorflow
   - tensorflow-base
+  - tensorflow-gpu
   - theano
   - tk
-  - torchvision-cpu
+  - torchvision
   - tqdm
   - typed-ast
   - typing

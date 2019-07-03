@@ -1,7 +1,16 @@
+trigger:
+  - master
+
 jobs:
-- job: ubuntu_base
-  pool:
-    vmImage: "ubuntu-18.04"
-  steps:
-    - bash: ubuntu.base.sh -d bionic -l us -u $(whoami)
-    - bash: ubuntu.base.test.sh
+  - job: ubuntu
+    pool:
+      vmImage: "ubuntu-16.04"
+    strategy:
+      matrix:
+        base:
+          config: base
+        desktop:
+          config: extra
+      maxParallel: 2
+    steps:
+      - bash: sudo docker run -v $PWD:/build ubuntu:bionic /bin/bash -c "cd /build; bash ci/ubuntu.sh $(config)"
