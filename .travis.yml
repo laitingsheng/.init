@@ -3,11 +3,8 @@ language: minimal
 sudo: required
 services:
   - docker
-env:
-  - config=base
-  - config=extra
 script:
-  - sudo docker run -v $PWD:/build ubuntu:bionic /bin/bash -c "cd /build; bash ci/ubuntu.sh $config"
+  - sudo docker run -v $PWD:/build ubuntu:bionic /bin/bash -c "cd /build; bash ubuntu.sh"
 branches:
   only:
     - master

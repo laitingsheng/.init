@@ -17,9 +17,6 @@ trap EXIT_PRINT EXIT
 # disable interactive mode
 export DEBIAN_FRONTEND=noninteractive
 
-# fix current umask
-umask 0022
-
 print_usage()
 {
     cat <<- EOL
@@ -96,16 +93,8 @@ then
     exit 126
 fi
 
-# WSL only
-if grep -iq microsoft <(uname -a)
-then
-    CURRENT_STEP='Install wsl.conf to /etc'
-    ON_EXIT_MSG='Fail to install the correct wsl.conf to /etc'
-    # add wsl.conf to /etc/ for customised configuration
-    info_echo 'Adding wsl.conf to /etc/'
-    install -o root -g root -m 644 templates/wsl.conf.template /etc/wsl.conf
-    sed -i "s/%INTEROP_APPEND_WINDOWS_PATH%/$win_path/" /etc/wsl.conf
-fi
+# fix current umask
+umask 0022
 
 CURRENT_STEP='Update timezone to Australia/Melbourne'
 ON_EXIT_MSG='Fail to set timezone'
@@ -117,15 +106,12 @@ ON_EXIT_MSG='Failed to modify /etc/apt/sources.list'
 # generate sources.list from template
 info_echo 'Updating /etc/apt/sources.list'
 install -o root -g root -m 644 templates/ubuntu.sources.list.template /etc/apt/sources.list
-sed -i "s/%COMMAND%/deb/;s|%REPO%|${repo:-http://${loc:-}${loc:+.}archive.ubuntu.com/ubuntu}|;s/%DIST%/$dist/" /etc/apt/sources.list
+sed -i "s|%REPO%|${repo:-http://${loc:-}${loc:+.}archive.ubuntu.com/ubuntu}|;s/%DIST%/$dist/" /etc/apt/sources.list
 
 CURRENT_STEP='Refresh index'
 ON_EXIT_MSG='Repository URL may not be valid or check the Internet connection'
-# manage packages
-info_echo 'Refreshing the index and installing/upgrading packages'
+info_echo 'Refreshing the index'
 apt-get update
-apt-get dist-upgrade -fy
-apt-get upgrade -fy
 
 CURRENT_STEP='Remove LXC and snapd'
 ON_EXIT_MSG='Fail to purge LXC packages'
@@ -133,51 +119,56 @@ ON_EXIT_MSG='Fail to purge LXC packages'
 info_echo 'Removing unnecessary lxd and snap'
 apt-get purge lxd lxd-client snapd -fy
 
+CURRENT_STEP='Upgrade packages'
+ON_EXIT_MSG='Check the Internet connection'
+apt-get dist-upgrade -fy
+apt-get upgrade -fy
+
+CURRENT_STEP='Mark all dependencies as automatic installation'
+apt list --installed | cut -d '/' -f1 | xargs apt-mark auto
+
 CURRENT_STEP='Install packages'
 ON_EXIT_MSG="Some of the packges is not available for '$dist' distribution"
 xargs apt-get install -fy <<- EOL
 bash
-sudo
-cron
-locales
-software-properties-common
+ubuntu-minimal
+ubuntu-standard
+ubuntu-server
+build-essential
 gcc
 g++
 make
+cmake
+zip
+git
 wget
 curl
-perl
-git
-nano
 moreutils
 parallel
-htop
-net-tools
 expect
 tree
-vim
+p7zip
 python
 python-pip
 python3
 python3-pip
 maven
-EOL
-
-CURRENT_STEP='Add Docker to APT repository'
-ON_EXIT_MSG='Fail to add Docker repository'
-# official Docker repo
-info_echo 'Adding Docker repository'
-curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' | apt-key add -
-echo "deb https://download.docker.com/linux/ubuntu $dist stable" >> /etc/apt/sources.list
-apt-get update
-
-CURRENT_STEP='Install Docker'
-ON_EXIT_MSG="Docker stable channel may not be available for '$dist'"
-info_echo 'Installing Docker'
-xargs apt-get install -fy <<- EOL
-containerd.io
-docker-ce
-docker-ce-cli
+libboost-all-dev
+openjdk-8-jdk
+openjdk-11-jdk
+haskell-platform
+haskell-stack
+gdb
+lldb
+valgrind
+llvm
+mono-complete
+clang
+clang-format
+clang-tidy
+clang-tools
+texlive
+texlive-full
 EOL
 
 CURRENT_STEP='Update locale'
@@ -187,6 +178,59 @@ locale="en_${loc^^}.utf8"
 info_echo "Changing locale to $locale"
 locale-gen $locale || exit $?
 update-locale LANG=$locale LC_ALL=$locale LANGUAGE=$locale
+
+# WSL only
+if grep -iq microsoft <(uname -a)
+then
+    CURRENT_STEP='Install wsl.conf to /etc'
+    ON_EXIT_MSG='Fail to install the correct wsl.conf to /etc'
+    # add wsl.conf to /etc/ for customised configuration
+    info_echo 'Adding wsl.conf to /etc/'
+    install -o root -g root -m 644 templates/wsl.conf.template /etc/wsl.conf
+    sed -i "s/%INTEROP_APPEND_WINDOWS_PATH%/$win_path/" /etc/wsl.conf
+
+    # install the ubuntu-wsl if missing
+    apt-get install -fy ubuntu-wsl
+fi
+
+CURRENT_STEP='Add Docker to APT repository'
+ON_EXIT_MSG='Fail to add Docker repository'
+# official Docker repo
+info_echo 'Adding Docker repository'
+curl -fsSL 'https://download.docker.com/linux/ubuntu/gpg' | apt-key add -
+echo "deb https://download.docker.com/linux/ubuntu $dist stable" > /etc/apt/sources.list.d/docker.list
+apt-get update
+
+CURRENT_STEP='Install Docker'
+ON_EXIT_MSG="Docker stable channel may not be available for '$dist'"
+info_echo 'Installing Docker'
+apt-get install -fy containerd.io docker-ce docker-ce-cli
+
+CURRENT_STEP='Add Kubernetes & Google Cloud SDK to APT repository'
+ON_EXIT_MSG='Fail to add Google repositories'
+# official Docker repo
+info_echo 'Adding Google repositories'
+curl -s 'https://packages.cloud.google.com/apt/doc/apt-key.gpg' | apt-key add -
+echo 'deb https://apt.kubernetes.io kubernetes-xenial main' > /etc/apt/sources.list.d/google.list
+echo 'deb http://packages.cloud.google.com/apt cloud-sdk main' >> /etc/apt/sources.list.d/google.list
+apt-get update
+
+CURRENT_STEP='Install Google binaries'
+ON_EXIT_MSG='Failed to fetch some of the binaries'
+info_echo 'Installing Google binaries'
+apt-get install -fy kubectl kubeadm kubelet google-cloud-sdk
+
+CURRENT_STEP='Add Microsoft repositories and install binaries'
+ON_EXIT_MSG='Fail to add Microsoft repositories/packages'
+# official Docker repo
+info_echo 'Adding Microsoft repositories/packages'
+curl -sL 'https://packages.microsoft.com/keys/microsoft.asc' | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
+echo "deb https://packages.microsoft.com/repos/azure-cli/ $dist main" > /etc/apt/sources.list.d/azure.list
+dpkg -i /tmp/packages-microsoft-prod.deb
+apt-get update
+apt-get install -y azure-cli dotnet-sdk-2.2
+rm /tmp/packages-microsoft-prod.deb
 
 CURRENT_STEP='Fianlised'
 ON_EXIT_MSG='Base script execution completed'

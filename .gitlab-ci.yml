@@ -1,16 +1,6 @@
-.ubuntu:template: &ubuntu_template
+ubuntu:
   image: ubuntu:bionic
   script:
-    - bash ubuntu/$config.sh -d bionic -l au
+    - bash ubuntu.sh
   only:
     - master
-
-ubuntu:base:
-  variables:
-    config: base
-  <<: *ubuntu_template
-
-ubuntu:desktop:
-  variables:
-    config: extra
-  <<: *ubuntu_template

@@ -1,6 +1,6 @@
-%COMMAND% %REPO% %DIST% main restricted universe multiverse
-%COMMAND% %REPO% %DIST%-updates main restricted universe multiverse
-%COMMAND% %REPO% %DIST%-security main restricted universe multiverse
-%COMMAND% %REPO% %DIST%-proposed main restricted universe multiverse
-%COMMAND% %REPO% %DIST%-backports main restricted universe multiverse
-%COMMAND% http://archive.canonical.com/ubuntu %DIST% partner
+deb %REPO% %DIST% main restricted universe multiverse
+deb %REPO% %DIST%-updates main restricted universe multiverse
+deb %REPO% %DIST%-security main restricted universe multiverse
+deb %REPO% %DIST%-proposed main restricted universe multiverse
+deb %REPO% %DIST%-backports main restricted universe multiverse
+deb http://archive.canonical.com/ubuntu %DIST% partner
