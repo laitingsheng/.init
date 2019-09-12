@@ -119,16 +119,14 @@ ON_EXIT_MSG='Fail to purge LXC packages'
 info_echo 'Removing unnecessary lxd and snap'
 apt-get purge lxd lxd-client snapd -fy
 
-CURRENT_STEP='Upgrade packages'
-ON_EXIT_MSG='Check the Internet connection'
-apt-get dist-upgrade -fy
-apt-get upgrade -fy
-
 CURRENT_STEP='Mark all dependencies as automatic installation'
+ON_EXIT_MSG='Unexpected error during marking automatic installation'
+info_echo 'Marking all pacages as automatic installation'
 apt list --installed | cut -d '/' -f1 | xargs apt-mark auto
 
 CURRENT_STEP='Install packages'
 ON_EXIT_MSG="Some of the packges is not available for '$dist' distribution"
+info_echo 'Installing packages'
 xargs apt-get install -fy <<- EOL
 bash
 ubuntu-minimal
@@ -169,6 +167,9 @@ clang-tidy
 clang-tools
 texlive
 texlive-full
+gccgo
+golang
+gnugo
 EOL
 
 CURRENT_STEP='Update locale'
@@ -219,6 +220,7 @@ CURRENT_STEP='Install Google binaries'
 ON_EXIT_MSG='Failed to fetch some of the binaries'
 info_echo 'Installing Google binaries'
 apt-get install -fy kubectl kubeadm kubelet google-cloud-sdk
+kubectl completion bash > /etc/bash_completion.d/kubectl
 
 CURRENT_STEP='Add Microsoft repositories and install binaries'
 ON_EXIT_MSG='Fail to add Microsoft repositories/packages'
@@ -231,6 +233,11 @@ dpkg -i /tmp/packages-microsoft-prod.deb
 apt-get update
 apt-get install -y azure-cli dotnet-sdk-2.2
 rm /tmp/packages-microsoft-prod.deb
+
+CURRENT_STEP='Remove unnecessary packages'
+ON_EXIT_MSG='Failed to remove unnecessary pakcages'
+info_echo 'Removing unnecessary packages'
+apt-get autoremove -yq
 
 CURRENT_STEP='Fianlised'
 ON_EXIT_MSG='Base script execution completed'

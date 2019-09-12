@@ -1,0 +1,14 @@
+name: master
+
+on:
+  push:
+    branch:
+      - master
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    container: ubuntu:bionic
+    steps:
+      - uses: actions/checkout@master
+      - run: bash ubuntu.sh

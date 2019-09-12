@@ -41,6 +41,7 @@ dependencies:
   - pycurl
   - pylint
   - python
+  - python-kubernetes
   - requests
   - selenium
   - simplegeneric
