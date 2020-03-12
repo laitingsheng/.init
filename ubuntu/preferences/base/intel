@@ -1,0 +1,3 @@
+Package: *
+Pin: origin apt.repos.intel.com
+Pin-Priority: 501

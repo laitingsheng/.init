@@ -1,0 +1,15 @@
+Package: *
+Pin: origin archive.canonical.com
+Pin-Priority: 500
+
+Package: *
+Pin: origin archive.ubuntu.com
+Pin-Priority: 500
+
+Package: *
+Pin: origin au.archive.ubuntu.com
+Pin-Priority: 500
+
+Package: *
+Pin: origin ftp.iinet.net.au
+Pin-Priority: 500

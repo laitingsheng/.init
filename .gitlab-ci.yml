@@ -1,6 +1,0 @@
-ubuntu:
-  image: ubuntu:bionic
-  script:
-    - bash ubuntu.sh
-  only:
-    - master

@@ -1,9 +1,0 @@
-trigger:
-  - master
-
-jobs:
-  - job: ubuntu
-    pool:
-      vmImage: "ubuntu-16.04"
-    steps:
-      - bash: sudo docker run -v $PWD:/build ubuntu:bionic /bin/bash -c "cd /build; bash ubuntu.sh"
