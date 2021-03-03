@@ -21,6 +21,7 @@ DIST=$(lsb_release -cs)
 RELEASE=$(lsb_release -rs)
 REPO="http://au.archive.ubuntu.com/ubuntu"
 DESKTOP=yes
+UPGRADE=yes
 
 while getopts ":d:r:sv:w" ARG
 do
@@ -33,6 +34,9 @@ do
             ;;
         s )
             unset DESKTOP
+            ;;
+        u )
+            unset UPGRADE
             ;;
         v )
             RELEASE=${OPTARG}
@@ -59,6 +63,7 @@ Configuration:
     Repository: ${REPO}
     Destop Mode: ${DESKTOP:-no}
     WSL Mode: ${WSL:-no}
+    Upgrade: ${UPGRADE:-no}
 EOL
 
 # update sources
@@ -67,23 +72,22 @@ mkdir -m 755 /etc/apt/sources.list.d
 install -o root -g root -m 644 -T ${DIR}/lists/sources.list /etc/apt/sources.list
 install -o root -g root -m 644 ${DIR}/lists/base/* /etc/apt/sources.list.d
 sed -i "s|%REPO%|${REPO}|;s/%RELEASE%/${RELEASE}/g;s/%DIST%/${DIST}/g" /etc/apt/sources.list.d/*.list
+install -o root -g root -m 644 ${DIR}/lists/nvidia/${RELEASE}.list /etc/apt/sources.list.d/nvidia.list
 
 # update keys
 rm -f /etc/apt/trusted.gpg /etc/apt/trusted.gpg~ /etc/apt/trusted.gpg.d/*.gpg
-# 1. Ubuntu Main Key; 2. GitHub CLI Key
-xargs apt-key adv --keyserver keyserver.ubuntu.com --recv-key <<- EOL
-3B4FE6ACC0B21F32
-C99B11DEB97541F0
-EOL
+# Add back Ubuntu Archive key
+apt-key add /usr/share/keyrings/ubuntu-archive-keyring.gpg
 xargs apt-key adv -q --fetch-keys <<- EOL
 https://packages.microsoft.com/keys/microsoft.asc
+https://cli.github.com/packages/githubcli-archive-keyring.gpg
 https://download.docker.com/linux/ubuntu/gpg
 https://packages.cloud.google.com/apt/doc/apt-key.gpg
 https://apt.releases.hashicorp.com/gpg
 https://deb.nodesource.com/gpgkey/nodesource.gpg.key
 https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-http://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
 EOL
+cat lists/nvidia/20.04.key.url | xargs apt-key adv -q --fetch-keys
 
 # update preferences
 rm -rf /etc/apt/preferences.d
@@ -103,8 +107,16 @@ EOL
     install -o root -g root -m 644 ${DIR}/preferences/desktop/* /etc/apt/preferences.d
 fi
 
-# refresh
+# refresh index
 apt-get update
+
+if [[ ${UPGRADE} ]]
+then
+    apt-get dist-upgrade -fy
+    apt-get upgrade -fy
+fi
+
+# unmark all packages
 apt list --installed | cut -d '/' -f1 | xargs apt-mark auto
 
 # remove LXC & Snap for WSL
@@ -126,8 +138,15 @@ fonts-noto
 errno
 parallel
 expect
-tree
+mle
 p7zip-full
+neofetch
+httpie
+bat
+gpustat
+ctop
+hub
+zsh
 EOL
 
 if [[ ${DESKTOP} ]]
@@ -167,9 +186,9 @@ python3-pip
 python3-venv
 python3-coverage-test-runner
 python3-autopep8
+r-base
 mypy
 cython3-dbg
-jupyter
 gradle
 maven
 openjdk-8-jdk
@@ -195,8 +214,9 @@ nodejs
 julia
 terraform
 intel-hpckit
-cuda-toolkit-11-2
+cuda
 ocl-icd-opencl-dev
+cargo
 EOL
 
 # libraries
@@ -206,13 +226,36 @@ libyaml-cpp-dev
 libfmt-dev
 EOL
 
+# Python modules
+xargs apt-get install -fy <<- EOL
+ansible
+jupyter
+python3-openstackclient
+python3-seaborn
+python3-sklearn-pandas
+EOL
+
 # common apps
 xargs apt-get install -fy <<- EOL
+aws-shell
 azure-cli
 dotnet-sdk-*
 docker-ce
 google-cloud-sdk
 kubeadm
+EOL
+
+# funny apps
+xargs apt-get install -fy <<- EOL
+ansiweather
+EOL
+
+# NPM global packages
+xargs npm install -g <<- EOL
+serve
+react
+typescript
+leetcode-cli
 EOL
 
 # apps only for desktop
@@ -224,6 +267,10 @@ fi
 if [[ ${WSL} ]]
 then
     install -o root -g root -m 644 wsl.conf /etc/wsl.conf
+    # the first user ID on WSL/Ubuntu will always be 1000
+    sed -i "s|%USER%|$(id -nu 1000)|" /etc/wsl.conf
 fi
 
+update-alternatives --set editor /usr/bin/vim.basic
 update-locale LANG=en_AU.utf8 LANGUAGE=en_AU.utf8 LC_ALL=en_AU.utf8
+usermod -aG docker ${USER}
