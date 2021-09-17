@@ -1,0 +1,210 @@
+{
+  "variables": {
+    "desktop": false,
+    "wsl": true,
+    "prune": true,
+    "autoremove": true,
+    "upgrade": true,
+    "max_download_size": null,
+    "max_install_size": null,
+    "release": "20.04",
+    "codename": "focal"
+  },
+  "apt": {
+    "ubuntu": {
+      "uri": "https://mirrors.aliyun.com/ubuntu",
+      "dist_suffices": [
+        "",
+        "-updates",
+        "-security",
+        "-proposed",
+        "-backports"
+      ],
+      "components": [
+        "main",
+        "restricted",
+        "universe",
+        "multiverse"
+      ],
+      "key": "file:///usr/share/keyrings/ubuntu-archive-keyring.gpg",
+      "packages": [
+        "ubuntu-minimal",
+        "ubuntu-standard",
+        "ubuntu-server",
+        "language-pack-en",
+        "language-pack-zh-hans",
+        "language-pack-zh-hant",
+        "locales-all",
+        "fonts-noto",
+        "errno",
+        "parallel",
+        "expect",
+        "mle",
+        "p7zip-full",
+        "neofetch",
+        "httpie",
+        "bat",
+        "gpustat",
+        "ctop",
+        "hub",
+        "zsh",
+        "build-essential",
+        "cmake-extras",
+        "meson",
+        "gcc-multilib",
+        "g++-multilib",
+        "gcc-opt",
+        "uuid-dev",
+        "uuid-runtime",
+        "gdc",
+        "gcovr",
+        "flex",
+        "bison",
+        "git-all",
+        "git-ftp",
+        "git-lfs",
+        "grip",
+        "subversion",
+        "ruby-all-dev",
+        "python3-all-dbg",
+        "python3-pip",
+        "python3-venv",
+        "python3-coverage-test-runner",
+        "python3-autopep8",
+        "r-base",
+        "mypy",
+        "cython3-dbg",
+        "gradle",
+        "maven",
+        "openjdk-11-jdk",
+        "haskell-platform",
+        "haskell-stack",
+        "valgrind-dbg",
+        "mono-complete",
+        "lldb",
+        "llvm-dev",
+        "ldc",
+        "clang",
+        "clang-format",
+        "clang-tidy",
+        "clang-tools",
+        "clangd",
+        "texlive",
+        "texlive-full",
+        "gccgo",
+        "golang",
+        "gnugo",
+        "julia",
+        "cargo",
+        "ocl-icd-opencl-dev",
+        "libboost-all-dev",
+        "libyaml-cpp-dev",
+        "libfmt-dev",
+        "ansible",
+        "jupyter",
+        "python3-openstackclient",
+        "python3-seaborn",
+        "python3-sklearn-pandas",
+        "ansiweather"
+      ]
+    },
+    "dotnet": {
+      "uri": {
+        "template": "https://packages.microsoft.com/ubuntu/{release}/prod",
+        "format_args": {
+          "release": {
+            "variable": "release"
+          }
+        }
+      },
+      "output": "microsoft",
+      "key": "https://packages.microsoft.com/keys/microsoft.asc",
+      "packages": [
+        "dotnet-sdk-5.0"
+      ]
+    },
+    "github": {
+      "uri": "https://cli.github.com/packages",
+      "output": "microsoft",
+      "key": "https://cli.github.com/packages/githubcli-archive-keyring.gpg",
+      "packages": [
+        "gh"
+      ]
+    },
+    "node": {
+      "uri": {
+        "template": "https://deb.nodesource.com/node_{version}.x",
+        "format_args": {
+          "version": {
+            "value": 16
+          }
+        }
+      },
+      "key": "https://deb.nodesource.com/gpgkey/nodesource.gpg.key",
+      "packages": [
+        "nodejs"
+      ]
+    },
+    "docker": {
+      "uri": "https://mirrors.aliyun.com/docker-ce/linux/ubuntu",
+      "components": [
+        "stable"
+      ],
+      "key": "https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg",
+      "packages": [
+        "docker-ce"
+      ]
+    },
+    "kubernetes": {
+      "uri": "https://mirrors.aliyun.com/kubernetes/apt",
+      "dists": [
+        "kubernetes-xenial"
+      ],
+      "key": "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg",
+      "packages": [
+        "kubeadm"
+      ]
+    },
+    "hashicorp": {
+      "uri": "https://apt.releases.hashicorp.com",
+      "key": "https://apt.releases.hashicorp.com/gpg",
+      "packages": [
+        "terraform"
+      ]
+    },
+    "cuda": {
+      "uri": {
+        "template": "https://mirrors.aliyun.com/nvidia-cuda/ubuntu{release}/x86_64",
+        "format_args": {
+          "release": {
+            "variable": "release",
+            "method": {
+              "name": "replace",
+              "args": [".", ""]
+            }
+          }
+        }
+      },
+      "output": "nvidia",
+      "dists": [
+        "/"
+      ],
+      "components": [],
+      "key": {
+        "template": "https://mirrors.aliyun.com/nvidia-cuda/ubuntu{release}/x86_64/7fa2af80.pub",
+        "format_args": {
+          "release": {
+            "variable": "release",
+            "method": {
+              "name": "replace",
+              "args": [".", ""]
+            }
+          }
+        }
+      },
+      "packages": [
+        "cuda"
+      ]
+    }
+  }
+}
