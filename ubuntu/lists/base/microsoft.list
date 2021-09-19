@@ -1,3 +1,0 @@
-deb [arch=amd64] https://packages.microsoft.com/ubuntu/%RELEASE%/prod %DIST% main
-deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ %DIST% main
-deb [arch=amd64] https://cli.github.com/packages %DIST% main

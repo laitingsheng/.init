@@ -10,9 +10,8 @@ from typing import Any, Dict
 from urllib import request
 
 import apt
-import apt_pkg
+import aptsources.sourceslist
 import lsb_release
-from aptsources.sourceslist import SourcesList
 
 _DIST_INFO = lsb_release.get_distro_information()
 
@@ -129,41 +128,34 @@ class _APTConfig:
         else:
             raise TypeError(f"{uri_config} is neither a string nor a recognised config")
 
-    def autoremove(self):
-        if self._variables.autoremove:
-            cache = apt_pkg.Cache()
-            dep = apt_pkg.DepCache(cache)
-            with apt_pkg.ActionGroup(dep):
-                for package in cache.packages:
-                    if dep.is_garbage(package):
-                        dep.mark_delete(package, True)
+    def run(self):
+        cache = apt.Cache()
+        cache.update()
 
-                dep.commit(apt.progress.base.AcquireProgress(), apt.progress.base.InstallProgress())
-
-    def init(self):
-        apt_pkg.init()
-        # sources_list = apt_pkg.SourceList()
-        # sources_list.read_main_list()
-        # apt_pkg.Cache().update(apt.progress.base.AcquireProgress(), sources_list)
-
-    def install(self):
-        cache = apt_pkg.Cache()
-        dep = apt_pkg.DepCache(cache)
-        with apt_pkg.ActionGroup(dep):
-            for package in cache.packages:
+        # edit current packages
+        with cache, cache.actiongroup():
+            for package in cache:
                 if package.name in self._packages:
-                    dep.mark_install(package, True, True)
-                    dep.mark_auto(package, False)
+                    package.mark_install(True, True, True)
+                    package.mark_auto(False)
                     self._packages.remove(package.name)
                 else:
-                    dep.mark_auto(package, True)
+                    package.mark_auto(True)
+            cache.commit()
 
-            dep.commit(apt.progress.base.AcquireProgress(), apt.progress.base.InstallProgress())
+        # remove unused packages
+        if self._variables.autoremove:
+            with cache, cache.actiongroup():
+                for package in cache:
+                    if package.is_auto_removable:
+                        package.mark_delete(True, True)
+                cache.commit()
 
-        if self._packages:
-            print("The following packages are missing in the current APT repositories:", file=sys.stderr)
-            for package in self._packages:
-                print(f"    * {package}", file=sys.stderr)
+        # perform an upgrade on all installed packages
+        if self._variables.upgrade:
+            with cache, cache.actiongroup():
+                cache.upgrade(True)
+                cache.commit()
 
     def prune(self):
         if self._variables.prune:
@@ -188,28 +180,13 @@ class _APTConfig:
                 f.write(p.stdout)
 
     def save_sources(self):
-        sources_list = SourcesList()
+        sources_list = aptsources.sourceslist.SourcesList()
         for k, entries in self._sources.items():
             file = self._sources_list_d / f"{k}.list"
             for entry in entries.values():
                 for dist in entry.dists:
-                    sources_list.add(
-                        "deb",
-                        entry.uri,
-                        dist,
-                        entry.components,
-                        file=file,
-                        architectures=entry.architectures
-                    )
+                    sources_list.add("deb", entry.uri, dist, entry.components, file=file, architectures=entry.architectures)
         sources_list.save()
-
-    def upgrade(self):
-        if self._variables.upgrade:
-            cache = apt_pkg.Cache()
-            dep = apt_pkg.DepCache(cache)
-            with apt_pkg.ActionGroup(dep):
-                dep.upgrade(True)
-                dep.commit(apt.progress.base.AcquireProgress(), apt.progress.base.InstallProgress())
 
 
 class _Initialiser:
@@ -223,10 +200,7 @@ class _Initialiser:
         self._apt.prune()
 
     def run_apt(self):
-        self._apt.init()
-        self._apt.install()
-        self._apt.autoremove()
-        self._apt.upgrade()
+        self._apt.run()
 
     def save(self):
         self._apt.save_sources()

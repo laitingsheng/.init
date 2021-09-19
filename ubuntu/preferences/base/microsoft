@@ -1,7 +1,0 @@
-Package: *
-Pin: origin packages.microsoft.com
-Pin-Priority: 501
-
-Package: *
-Pin: origin cli.github.com
-Pin-Priority: 501

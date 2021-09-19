@@ -1,2 +1,0 @@
-deb [arch=amd64] https://apt.kubernetes.io kubernetes-xenial main
-deb [arch=amd64] http://packages.cloud.google.com/apt cloud-sdk main
