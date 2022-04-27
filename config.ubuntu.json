@@ -60,7 +60,13 @@
 				}
 			},
 			"githubcli": {
-				"uri": "https://cli.github.com/packages"
+				"uri": "https://cli.github.com/packages",
+				"dists": [
+					"stable"
+				],
+				"components": [
+					"main"
+				]
 			},
 			"node": {
 				"uri": {
@@ -87,9 +93,6 @@
 			},
 			"redis": {
 				"uri": "https://packages.redis.io/deb"
-			},
-			"apache": {
-				"uri": "https://apache.jfrog.io/artifactory/couchdb-deb"
 			},
 			"nginx": {
 				"uri": "https://nginx.org/packages/ubuntu",
@@ -122,7 +125,6 @@
 			"kubernetes": "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg",
 			"kitware": "https://apt.kitware.com/keys/kitware-archive-latest.asc",
 			"redis": "https://packages.redis.io/gpg",
-			"apache": "https://couchdb.apache.org/repo/keys.asc",
 			"nginx": "https://nginx.org/keys/nginx_signing.key",
 			"cuda": {
 				"template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64/7fa2af80.pub",
@@ -189,6 +191,8 @@
 			"grip",
 			"subversion",
 			"ruby-all-dev",
+			"ruby-full",
+			"rails",
 			"python3-all-dbg",
 			"python3-pip",
 			"python3-venv",
