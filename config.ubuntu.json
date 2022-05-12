@@ -2,13 +2,13 @@
 	"variables": {
 		"desktop": false,
 		"wsl": true,
-		"keep_old_config": false,
+		"keep_old_config": true,
 		"autoremove": false,
 		"upgrade": true,
 		"max_download_size": null,
 		"max_install_size": null,
-		"release": "20.04",
-		"codename": "focal"
+		"release": "22.04",
+		"codename": "jammy"
 	},
 	"apt": {
 		"repos": {
@@ -89,7 +89,10 @@
 				]
 			},
 			"kitware": {
-				"uri": "https://apt.kitware.com/ubuntu"
+				"uri": "https://apt.kitware.com/ubuntu",
+				"dists": [
+					"focal"
+				]
 			},
 			"redis": {
 				"uri": "https://packages.redis.io/deb"
@@ -127,7 +130,7 @@
 			"redis": "https://packages.redis.io/gpg",
 			"nginx": "https://nginx.org/keys/nginx_signing.key",
 			"cuda": {
-				"template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64/7fa2af80.pub",
+				"template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64/3bf863cc.pub",
 				"format_args": {
 					"folder": {
 						"type": "method",
@@ -174,12 +177,13 @@
 			"build-essential",
 			"crossbuild-essential-i386",
 			"crossbuild-essential-amd64",
+			"crossbuild-essential-armel",
 			"crossbuild-essential-armhf",
 			"crossbuild-essential-arm64",
 			"cmake-extras",
 			"meson",
 			"gcc-opt",
-			"gdb-dbg",
+			"gdb",
 			"uuid-dev",
 			"gdc",
 			"gcovr",
@@ -192,7 +196,6 @@
 			"subversion",
 			"ruby-all-dev",
 			"ruby-full",
-			"rails",
 			"python3-all-dbg",
 			"python3-pip",
 			"python3-venv",
@@ -203,7 +206,6 @@
 			"cython3-dbg",
 			"gradle",
 			"maven",
-			"openjdk-11-source",
 			"openjdk-17-source",
 			"haskell-platform",
 			"haskell-stack",
@@ -230,11 +232,9 @@
 			"lz4",
 			"google-perftools",
 
-			"ocl-icd-opencl-dev",
 			"libboost-all-dev",
 			"libyaml-cpp-dev",
 			"libfmt-dev",
-			"libopencv-dev",
 			"librsync-dev",
 			"libjemalloc-dev",
 			"libstb-dev",
@@ -252,13 +252,12 @@
 			"python3-msgpack",
 			"python3-yaml",
 			"python3-lz4",
-			"python3-opencv",
 			"python3-openstackclient",
 			"python3-seaborn",
 			"python3-sklearn-pandas",
 			"python3-distributed",
 
-			"dotnet-sdk-5.0",
+			"dotnet-sdk-6.0",
 
 			"gh",
 
