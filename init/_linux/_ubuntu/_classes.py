@@ -4,7 +4,6 @@ import math
 import operator
 import os
 import platform
-import re
 import shutil
 import subprocess
 import sys
@@ -16,7 +15,7 @@ from typing import Any, Dict, Iterable, Iterator, List
 
 import lsb_release
 from apt import Cache, Package
-from aptsources.sourceslist import SourcesList
+from aptsources.sourceslist import SourceEntry, SourcesList
 
 _APT_PREFERENCES_DIR = Path("/etc/apt/preferences.d")
 _APT_SOURCES_LIST_DIR = Path("/etc/apt/sources.list.d")
@@ -61,6 +60,18 @@ class _APTKeyFile(_SimpleData):
             f.write(p.stdout)
         os.chown(key_path, 0, 0)
         os.chmod(key_path, 0o644)
+
+
+class _APTRemoteRepoFile(_SimpleData):
+    __slots__ = "_name", "_url"
+
+    def write_to(self, source_list: SourcesList):
+        file = _APT_SOURCES_LIST_DIR / f"{self._name}.list"
+        with urllib.request.urlopen(self._url) as f:
+            source_list.list.extend(
+                SourceEntry(line, file)
+                for line in f.read().decode("utf-8").splitlines()
+            )
 
 
 class _APTRepoFile(_SimpleData):
@@ -195,7 +206,10 @@ class _Initialiser(_SimpleData):
         # parepare for overwriting the config if requested
         if not self._var_keep_old_config:
             self._apt_repos = [
-                _APTRepoFile(
+                _APTRemoteRepoFile(
+                    name=repo_name,
+                    url=self._normalise_uri(repo_config["url"])
+                ) if "url" in repo_config else _APTRepoFile(
                     name=repo_name,
                     uri=self._normalise_uri(repo_config["uri"]),
                     dists=repo_config["dists"] if "dists" in repo_config else [
@@ -304,14 +318,14 @@ class _Initialiser(_SimpleData):
     def _size_check(self, package: Package) -> bool:
         pass
 
-    def _substitute_method(self, name: str, args=[], kwargs={}):
+    def _substitute_method(self, name: str, args=[], kwargs={}) -> str:
         return getattr(self, f"_sup_method_{name}")(*args, **kwargs)
 
-    def _substitute_variable(self, name: str):
+    def _substitute_variable(self, name: str) -> str:
         return getattr(self, f"_var_{name}")
 
     def _sup_method_cuda_uri_folder(self) -> str:
-        return "wsl-ubuntu" if self._var_wsl else f"ubuntu{self._var_release.replace('.', '')}"
+        return f"ubuntu{self._var_release.replace('.', '')}"
 
     def run(self):
         self._apt()

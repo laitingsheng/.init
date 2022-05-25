@@ -1,295 +1,339 @@
 {
-	"variables": {
-		"desktop": false,
-		"wsl": true,
-		"keep_old_config": true,
-		"autoremove": false,
-		"upgrade": true,
-		"max_download_size": null,
-		"max_install_size": null,
-		"release": "22.04",
-		"codename": "jammy"
-	},
-	"apt": {
-		"repos": {
-			"ubuntu": {
-				"uri": "https://mirrors.aliyun.com/ubuntu",
-				"codename_suffices": [
-					"",
-					"-updates",
-					"-security",
-					"-proposed",
-					"-backports"
-				],
-				"components": [
-					"main",
-					"restricted",
-					"universe",
-					"multiverse"
-				]
-			},
-			"ubuntu.ports": {
-				"uri": "https://mirrors.aliyun.com/ubuntu-ports",
-				"architectures": [
-					"armhf",
-					"arm64"
-				],
-				"codename_suffices": [
-					"",
-					"-updates",
-					"-security",
-					"-proposed",
-					"-backports"
-				],
-				"components": [
-					"main",
-					"restricted",
-					"universe",
-					"multiverse"
-				]
-			},
-			"dotnet": {
-				"uri": {
-					"template": "https://packages.microsoft.com/ubuntu/{release}/prod",
-					"format_args": {
-						"release": {
-							"type": "variable",
-							"name": "release"
-						}
-					}
-				}
-			},
-			"githubcli": {
-				"uri": "https://cli.github.com/packages",
-				"dists": [
-					"stable"
-				],
-				"components": [
-					"main"
-				]
-			},
-			"node": {
-				"uri": {
-					"template": "https://deb.nodesource.com/node_{version}.x",
-					"format_args": {
-						"version": 16
-					}
-				}
-			},
-			"docker": {
-				"uri": "https://download.docker.com/linux/ubuntu",
-				"components": [
-					"stable"
-				]
-			},
-			"kubernetes": {
-				"uri": "https://mirrors.aliyun.com/kubernetes/apt",
-				"dists": [
-					"kubernetes-xenial"
-				]
-			},
-			"kitware": {
-				"uri": "https://apt.kitware.com/ubuntu",
-				"dists": [
-					"focal"
-				]
-			},
-			"redis": {
-				"uri": "https://packages.redis.io/deb"
-			},
-			"nginx": {
-				"uri": "https://nginx.org/packages/ubuntu",
-				"components": [
-					"nginx"
-				]
-			},
-			"cuda": {
-				"uri": {
-					"template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64",
-					"format_args": {
-						"folder": {
-							"type": "method",
-							"name": "cuda_uri_folder"
-						}
-					}
-				},
-				"dists": [
-					"/"
-				],
-				"components": []
-			}
-		},
-		"keys": {
-			"ubuntu": "file:///usr/share/keyrings/ubuntu-archive-keyring.gpg",
-			"microsoft": "https://packages.microsoft.com/keys/microsoft.asc",
-			"githubcli": "https://cli.github.com/packages/githubcli-archive-keyring.gpg",
-			"node": "https://deb.nodesource.com/gpgkey/nodesource.gpg.key",
-			"docker": "https://download.docker.com/linux/ubuntu/gpg",
-			"kubernetes": "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg",
-			"kitware": "https://apt.kitware.com/keys/kitware-archive-latest.asc",
-			"redis": "https://packages.redis.io/gpg",
-			"nginx": "https://nginx.org/keys/nginx_signing.key",
-			"cuda": {
-				"template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64/3bf863cc.pub",
-				"format_args": {
-					"folder": {
-						"type": "method",
-						"name": "cuda_uri_folder"
-					}
-				}
-			}
-		},
-		"packages": [
-			"ubuntu-minimal",
-			"ubuntu-standard",
-			"ubuntu-server",
-			"language-pack-en",
-			"language-pack-zh-hans",
-			"language-pack-zh-hant",
-			"locales-all",
-			"fonts-noto",
-			"lsb",
-			"ifupdown-extra",
-			"errno",
-			"parallel",
-			"expect",
-			"mle",
-			"p7zip-full",
-			"neofetch",
-			"httpie",
-			"bat",
-			"gpustat",
-			"ctop",
-			"hub",
-			"zsh",
-			"node-address",
-			"ansiweather",
-			"network-manager-ssh",
-			"peek",
-			"redis",
-			"redis-sentinel",
-			"redis-redisearch",
-			"network-manager-ssh",
-			"speedtest-cli",
-			"certbot",
-			"forensics-extra",
+  "variables": {
+    "desktop": false,
+    "wsl": true,
+    "keep_old_config": false,
+    "autoremove": false,
+    "upgrade": true,
+    "max_download_size": null,
+    "max_install_size": null,
+    "release": "22.04",
+    "codename": "jammy"
+  },
+  "apt": {
+    "repos": {
+      "ubuntu": {
+        "uri": "https://mirrors.aliyun.com/ubuntu",
+        "codename_suffices": [
+          "",
+          "-updates",
+          "-security",
+          "-proposed",
+          "-backports"
+        ],
+        "components": [
+          "main",
+          "restricted",
+          "universe",
+          "multiverse"
+        ]
+      },
+      "ubuntu.ports": {
+        "uri": "https://mirrors.aliyun.com/ubuntu-ports",
+        "architectures": [
+          "armhf",
+          "arm64"
+        ],
+        "codename_suffices": [
+          "",
+          "-updates",
+          "-security",
+          "-proposed",
+          "-backports"
+        ],
+        "components": [
+          "main",
+          "restricted",
+          "universe",
+          "multiverse"
+        ]
+      },
+      "dotnet": {
+        "uri": {
+          "template": "https://packages.microsoft.com/ubuntu/{release}/prod",
+          "format_args": {
+            "release": {
+              "type": "variable",
+              "name": "release"
+            }
+          }
+        }
+      },
+      "githubcli": {
+        "uri": "https://cli.github.com/packages",
+        "dists": [
+          "stable"
+        ],
+        "components": [
+          "main"
+        ]
+      },
+      "node": {
+        "uri": {
+          "template": "https://deb.nodesource.com/node_{version}.x",
+          "format_args": {
+            "version": 16
+          }
+        }
+      },
+      "docker": {
+        "uri": "https://download.docker.com/linux/ubuntu",
+        "components": [
+          "stable"
+        ]
+      },
+      "kubernetes": {
+        "uri": "https://mirrors.aliyun.com/kubernetes/apt",
+        "dists": [
+          "kubernetes-xenial"
+        ]
+      },
+      "kitware": {
+        "uri": "https://apt.kitware.com/ubuntu"
+      },
+      "redis": {
+        "uri": "https://packages.redis.io/deb"
+      },
+      "nginx": {
+        "uri": "https://nginx.org/packages/ubuntu",
+        "components": [
+          "nginx"
+        ]
+      },
+      "cuda": {
+        "uri": {
+          "template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64",
+          "format_args": {
+            "folder": {
+              "type": "method",
+              "name": "cuda_uri_folder"
+            }
+          }
+        },
+        "dists": [
+          "/"
+        ],
+        "components": []
+      },
+      "nvidia.container": {
+        "url": {
+          "template": "https://nvidia.github.io/libnvidia-container/ubuntu{release}/libnvidia-container.list",
+          "format_args": {
+            "release": {
+              "type": "variable",
+              "name": "release"
+            }
+          }
+        }
+      },
+      "apache.couchdb": {
+        "uri": "https://apache.jfrog.io/artifactory/couchdb-deb"
+      },
+      "mongodb": {
+        "uri": "https://repo.mongodb.org/apt/ubuntu",
+        "dists": [
+          "focal/mongodb-org/5.0"
+        ],
+        "components": [
+          "multiverse"
+        ]
+      }
+    },
+    "keys": {
+      "ubuntu": "file:///usr/share/keyrings/ubuntu-archive-keyring.gpg",
+      "microsoft": "https://packages.microsoft.com/keys/microsoft.asc",
+      "githubcli": "https://cli.github.com/packages/githubcli-archive-keyring.gpg",
+      "node": "https://deb.nodesource.com/gpgkey/nodesource.gpg.key",
+      "docker": "https://download.docker.com/linux/ubuntu/gpg",
+      "kubernetes": "https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg",
+      "kitware": "https://apt.kitware.com/keys/kitware-archive-latest.asc",
+      "redis": "https://packages.redis.io/gpg",
+      "nginx": "https://nginx.org/keys/nginx_signing.key",
+      "cuda": {
+        "template": "https://developer.download.nvidia.cn/compute/cuda/repos/{folder}/x86_64/3bf863cc.pub",
+        "format_args": {
+          "folder": {
+            "type": "method",
+            "name": "cuda_uri_folder"
+          }
+        }
+      },
+      "nvidia.container": "https://nvidia.github.io/libnvidia-container/gpgkey",
+      "apache.couchdb": "https://couchdb.apache.org/repo/keys.asc",
+      "mongodb": "https://www.mongodb.org/static/pgp/server-5.0.asc"
+    },
+    "packages": [
+      "ubuntu-minimal",
+      "ubuntu-standard",
+      "ubuntu-server",
+      "language-pack-en",
+      "language-pack-zh-hans",
+      "language-pack-zh-hant",
+      "locales-all",
+      "fonts-noto",
+      "lsb",
+      "ifupdown-extra",
+      "errno",
+      "parallel",
+      "expect",
+      "mle",
+      "p7zip-full",
+      "neofetch",
+      "httpie",
+      "bat",
+      "gpustat",
+      "ctop",
+      "hub",
+      "zsh",
+      "node-address",
+      "ansiweather",
+      "network-manager-ssh",
+      "peek",
+      "redis-tools",
+      "network-manager-ssh",
+      "speedtest-cli",
+      "certbot",
+      "forensics-extra",
+      "enca",
 
-			"build-essential",
-			"crossbuild-essential-i386",
-			"crossbuild-essential-amd64",
-			"crossbuild-essential-armel",
-			"crossbuild-essential-armhf",
-			"crossbuild-essential-arm64",
-			"cmake-extras",
-			"meson",
-			"gcc-opt",
-			"gdb",
-			"uuid-dev",
-			"gdc",
-			"gcovr",
-			"flex",
-			"bison",
-			"git-all",
-			"git-ftp",
-			"git-lfs",
-			"grip",
-			"subversion",
-			"ruby-all-dev",
-			"ruby-full",
-			"python3-all-dbg",
-			"python3-pip",
-			"python3-venv",
-			"python3-coverage-test-runner",
-			"python3-autopep8",
-			"r-base",
-			"mypy",
-			"cython3-dbg",
-			"gradle",
-			"maven",
-			"openjdk-17-source",
-			"haskell-platform",
-			"haskell-stack",
-			"valgrind-dbg",
-			"mono-complete",
-			"lldb",
-			"llvm-dev",
-			"ldc",
-			"clang",
-			"clang-format",
-			"clang-tidy",
-			"clang-tools",
-			"clangd",
-			"rust-all",
-			"texlive",
-			"texlive-full",
-			"gccgo",
-			"golang",
-			"gnugo",
-			"julia",
-			"cargo",
-			"protobuf-c-compiler",
-			"protobuf-compiler",
-			"lz4",
-			"google-perftools",
+      "build-essential",
+      "crossbuild-essential-i386",
+      "crossbuild-essential-amd64",
+      "crossbuild-essential-armel",
+      "crossbuild-essential-armhf",
+      "crossbuild-essential-arm64",
+      "cmake-extras",
+      "meson",
+      "gcc-opt",
+      "gdb",
+      "uuid-dev",
+      "gdc",
+      "gcovr",
+      "flex",
+      "bison",
+      "git-all",
+      "git-ftp",
+      "git-lfs",
+      "grip",
+      "subversion",
+      "ruby-all-dev",
+      "ruby-full",
+      "python3-all-dbg",
+      "python3-all-dev",
+      "python3-pip",
+      "python3-venv",
+      "python3-coverage-test-runner",
+      "python3-autopep8",
+      "r-base",
+      "mypy",
+      "cython3-dbg",
+      "gradle",
+      "maven",
+      "default-jdk",
+      "openjdk-17-source",
+      "haskell-platform",
+      "haskell-stack",
+      "valgrind-dbg",
+      "mono-complete",
+      "lldb",
+      "llvm-dev",
+      "ldc",
+      "clang",
+      "clang-format",
+      "clang-tidy",
+      "clang-tools",
+      "clangd",
+      "rust-all",
+      "texlive",
+      "texlive-full",
+      "gccgo",
+      "golang",
+      "gnugo",
+      "julia",
+      "cargo",
+      "protobuf-c-compiler",
+      "protobuf-compiler",
+      "lz4",
+      "cpuinfo",
+      "google-perftools",
 
-			"libboost-all-dev",
-			"libyaml-cpp-dev",
-			"libfmt-dev",
-			"librsync-dev",
-			"libjemalloc-dev",
-			"libstb-dev",
-			"libgoogle-perftools-dev",
-			"libnghttp2-dev",
-			"liblz4-dev",
-			"libcrypto++-dev",
-			"libjsoncpp-dev",
-			"libfastjson-dev",
-			"rapidjson-dev",
-			"multimedia-devel",
+      "libcpuinfo-dev",
+      "libdpkg-dev",
+      "libpsimd-dev",
+      "libpthreadpool-dev",
+      "libboost-all-dev",
+      "libfmt-dev",
+      "libspdlog-dev",
+      "libabsl-dev",
+      "libjemalloc-dev",
+      "libopencv-dev",
+      "libopencv-contrib-dev",
+      "libyaml-cpp-dev",
+      "librsync-dev",
+      "libstb-dev",
+      "libgoogle-perftools-dev",
+      "libnghttp2-dev",
+      "liblz4-dev",
+      "libcrypto++-dev",
+      "libjsoncpp-dev",
+      "libfastjson-dev",
+      "libwoff-dev",
+      "libfaiss-dev",
+      "libonnx-dev",
+      "libfp16-dev",
+      "libfxdiv-dev",
+      "libgloo-dev",
+      "libceres-dev",
+      "libxnnpack-dev",
+      "libpng++-dev",
+      "rapidjson-dev",
+      "multimedia-devel",
 
-			"ansible",
-			"jupyter",
-			"python3-msgpack",
-			"python3-yaml",
-			"python3-lz4",
-			"python3-openstackclient",
-			"python3-seaborn",
-			"python3-sklearn-pandas",
-			"python3-distributed",
+      "ansible",
+      "jupyter",
+      "python3-msgpack",
+      "python3-yaml",
+      "python3-lz4",
+      "python3-openstackclient",
+      "python3-seaborn",
+      "python3-sklearn-pandas",
+      "python3-distributed",
 
-			"dotnet-sdk-6.0",
+      "dotnet-sdk-6.0",
 
-			"gh",
+      "gh",
 
-			"nodejs",
+      "nodejs",
 
-			"docker-ce",
+      "docker-ce",
 
-			"kubeadm",
+      "kubeadm",
 
-			"cuda"
-		]
-	},
-	"wsl": {
-		"automount": {
-			"enabled": true,
-			"root": "/mnt/",
-			"options": "metadata,umask=0022,fmask=0133,dmask=0022",
-			"mountFsTab": true
-		},
-		"network": {
-			"generateHosts": true,
-			"generateResolvConf": true
-		},
-		"interop": {
-			"enabled": true,
-			"appendWindowsPath": false
-		},
-		"user": {
-			"default": null
-		},
-		"wsl2": {
-			"guiapplications": true
-		}
-	}
+      "cuda",
+      "libnccl-dev",
+      "nvidia-docker2"
+    ]
+  },
+  "wsl": {
+    "automount": {
+      "enabled": true,
+      "root": "/mnt/",
+      "options": "metadata,umask=0022,fmask=0133,dmask=0022",
+      "mountFsTab": true
+    },
+    "network": {
+      "generateHosts": true,
+      "generateResolvConf": true
+    },
+    "interop": {
+      "enabled": true,
+      "appendWindowsPath": false
+    },
+    "user": {
+      "default": null
+    },
+    "wsl2": {
+      "guiapplications": true
+    }
+  }
 }
