@@ -1,0 +1,413 @@
+- name: Initialisation for Ubuntu
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  become: yes
+  vars:
+    username: laitingsheng
+    codename: jammy
+    version:
+      major: "22"
+      minor: "04"
+    locale: en_AU.UTF-8
+    wsl: "{{ ansible_facts['kernel'].endswith('-microsoft-standard-WSL2') }}"
+    mirrors:
+      # ubuntu: https://au.archive.ubuntu.com/ubuntu
+      ubuntu: https://mirrors.aliyun.com/ubuntu
+      # llvm: https://apt.llvm.org
+      llvm: https://mirrors.tuna.tsinghua.edu.cn/llvm-apt
+      # nvidia: https://developer.download.nvidia.com/compute/cuda/repos
+      nvidia: https://developer.download.nvidia.cn/compute/cuda/repos
+      # kubernetes: https://apt.kubernetes.io
+      kubernetes: https://mirrors.aliyun.com/kubernetes/apt
+      docker: https://download.docker.com/linux/ubuntu
+      # docker: https://mirrors.aliyun.com/docker-ce/linux/ubuntu
+  tasks:
+    - name: Add NOPASSWD to sudoers
+      lineinfile:
+        state: present
+        path: /etc/sudoers
+        regexp: '^%sudo[ \t]+ALL='
+        line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
+        validate: "/usr/sbin/visudo -cf %s"
+    - name: Fix root group settings
+      group:
+        name: root
+        gid: 0
+        state: present
+        system: yes
+        non_unique: no
+    - name: Fix root settings
+      user:
+        name: root
+        uid: 0
+        state: present
+        system: yes
+        non_unique: no
+        group: root
+        create_home: yes
+        home: /root
+        shell: /bin/bash
+        password: "!"
+        update_password: always
+    - name: Fix user group settings
+      group:
+        name: "{{ username }}"
+        gid: 1000
+        state: present
+        system: no
+        non_unique: no
+    - name: Fix user settings
+      user:
+        name: "{{ username }}"
+        uid: 1000
+        state: present
+        system: no
+        non_unique: no
+        append: no
+        group: "{{ username }}"
+        groups:
+          - users
+          - sudo
+          - adm
+          - plugdev
+          - cdrom
+          - dip
+          - lxd
+          - www-data
+        create_home: yes
+        home: "/home/{{ username }}"
+        shell: /usr/bin/zsh
+    - name: Empty the APT lists and preferences
+      copy:
+        content: "# This is left blank intentionally. All repositories can be found in /etc/apt/{{ item }}.d."
+        dest: "/etc/apt/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+      with_items:
+        - sources.list
+        - preferences
+    - name: Empty the APT keys
+      copy:
+        content: ""
+        dest: /etc/apt/trusted.gpg
+        owner: root
+        group: root
+        mode: 0644
+    # - name: Remove the APT lists folders
+    #   file:
+    #     state: absent
+    #     path: "/etc/apt/{{ item }}.d"
+    #   with_items:
+    #     - sources.list
+    #     - preferences
+    #     - trusted.gpg
+    - name: Mark all packages as automatically installed
+      shell: "dpkg-query -W | awk -F' ' '{print $1}' | xargs apt-mark auto"
+    - name: Create the APT lists folders
+      file:
+        state: directory
+        path: "/etc/apt/{{ item }}.d"
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - sources.list
+        - preferences
+        - trusted.gpg
+    - name: Add APT repositories
+      include_role:
+        name: apt_more
+      vars:
+        name: "{{ apt_config.name }}"
+        key: "{{ apt_config.key }}"
+        repo: "{{ apt_config.repo }}"
+      when: "(not wsl and (gui | default(False))) or not (apt_config.gui | default(False))"
+      loop:
+        - name: ubuntu
+          key:
+            file: "/usr/share/keyrings/ubuntu-archive-keyring.gpg"
+          repo:
+            urls:
+              - "{{ mirrors.ubuntu }}"
+            distributions:
+              - "{{ codename }}"
+              - "{{ codename }}-proposed"
+              - "{{ codename }}-updates"
+              - "{{ codename }}-security"
+              - "{{ codename }}-backports"
+            components:
+              - main
+              - restricted
+              - universe
+              - multiverse
+        - name: cuda
+          key:
+            url: "{{ mirrors.nvidia }}/ubuntu{{ version.major }}{{ version.minor }}/x86_64/3bf863cc.pub"
+          repo:
+            urls:
+              - "{{ mirrors.nvidia }}/ubuntu{{ version.major }}{{ version.minor }}/x86_64"
+              - "{{ wsl | ternary(mirrors.nvidia + '/wsl-ubuntu/x86_64', None) }}"
+            distributions:
+              - "/"
+        - name: githubcli
+          key:
+            url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+          repo:
+            urls:
+              - https://cli.github.com/packages
+            distributions:
+              - stable
+            components:
+              - main
+        - name: kitware
+          key:
+            url: https://apt.kitware.com/keys/kitware-archive-latest.asc
+          repo:
+            urls:
+              - https://apt.kitware.com/ubuntu
+            distributions:
+              - "{{ codename }}"
+            components:
+              - main
+        - name: llvm
+          key:
+            url: https://apt.llvm.org/llvm-snapshot.gpg.key
+          repo:
+            urls:
+              - "{{ mirrors.llvm }}/{{ codename }}"
+            distributions:
+              - "llvm-toolchain-{{ codename }}"
+            components:
+              - main
+        - name: nginx
+          key:
+            url: https://nginx.org/keys/nginx_signing.key
+          repo:
+            urls:
+              - https://nginx.org/packages/ubuntu
+            distributions:
+              - "{{ codename }}"
+            components:
+              - nginx
+        - name: docker
+          key:
+            url: "{{ mirrors.docker }}/gpg"
+          repo:
+            urls:
+              - "{{ mirrors.docker }}"
+            distributions:
+              - "{{ codename }}"
+            components:
+              - stable
+        - name: kubernetes
+          key:
+            url: "{{ mirrors.kubernetes }}/doc/apt-key.gpg"
+          repo:
+            urls:
+              - "{{ mirrors.kubernetes }}"
+            distributions:
+              - kubernetes-xenial
+            components:
+              - main
+        - name: redis
+          key:
+            url: https://packages.redis.io/gpg
+          repo:
+            urls:
+              - https://packages.redis.io/deb
+            distributions:
+              - "{{ codename }}"
+            components:
+              - main
+        - name: microsoft
+          key:
+            url: https://packages.microsoft.com/keys/microsoft.asc
+          repo:
+            urls:
+              - https://packages.microsoft.com/ubuntu/{{ version.major }}.{{ version.minor }}/prod
+            distributions:
+              - "{{ codename }}"
+            components:
+              - main
+        - name: microsoft
+          key:
+            replace: no
+          repo:
+            urls:
+              - https://packages.microsoft.com/repos/code
+              - https://packages.microsoft.com/repos/edge
+            distributions:
+              - stable
+            components:
+              - main
+          gui: yes
+      loop_control:
+        loop_var: apt_config
+    - name: Add extra APT repositories via URL
+      get_url:
+        url: "{{ item.url }}"
+        dest: "/etc/apt/sources.list.d/{{ item.name }}.list"
+        owner: root
+        group: root
+        mode: 0644
+      with_items:
+        - {
+          name: libnvidia-container,
+          url: "https://nvidia.github.io/libnvidia-container/ubuntu{{ version.major }}.{{ version.minor }}/libnvidia-container.list"
+        }
+    - name: Add APT keys for extra repositories
+      apt_key:
+        state: present
+        url: "{{ item.key }}"
+        keyring: "/etc/apt/trusted.gpg.d/{{ item.name }}.gpg"
+      with_items:
+        - {
+          name: libnvidia-container,
+          key: https://nvidia.github.io/libnvidia-container/gpgkey
+        }
+    - name: Perform system upgrade
+      apt:
+        state: latest
+        update_cache: yes
+        upgrade: dist
+    - name: Install system dependencies
+      apt:
+        state: latest
+        update_cache: no
+        name:
+          # system
+          - ubuntu-minimal
+          - ubuntu-standard
+          - ubuntu-server
+          # utilities
+          - language-pack-en
+          - language-pack-zh-hans
+          - language-pack-zh-hant
+          - locales-all
+          - fonts-noto
+          - lsb
+          - ifupdown-extra
+          - errno
+          - parallel
+          - expect
+          - mle
+          - p7zip-full
+          - neofetch
+          - httpie
+          - aria2
+          - bat
+          - gpustat
+          - ctop
+          - hub
+          - zsh
+          - node-address
+          - ansiweather
+          - network-manager-ssh
+          - peek
+          - redis-tools
+          - network-manager-ssh
+          - speedtest-cli
+          - certbot
+          - forensics-extra
+          - enca
+          - gh
+          - docker-ce
+          - nvidia-docker2
+          - kubeadm
+          # development
+          - build-essential
+          - crossbuild-essential-i386
+          - crossbuild-essential-amd64
+          - crossbuild-essential-armel
+          - crossbuild-essential-armhf
+          - crossbuild-essential-arm64
+          - cmake-extras
+          - meson
+          - gcc-opt
+          - gdb
+          - uuid-dev
+          - gdc
+          - gcovr
+          - flex
+          - bison
+          - git-all
+          - git-ftp
+          - git-lfs
+          - grip
+          - subversion
+          - ruby-all-dev
+          - ruby-full
+          - python3-all-dbg
+          - python3-all-dev
+          - r-base
+          - gradle
+          - maven
+          - default-jdk
+          - openjdk-11-source
+          - openjdk-17-source
+          - haskell-platform
+          - haskell-stack
+          - valgrind-dbg
+          - lldb
+          - llvm-dev
+          - ldc
+          - clang
+          - clang-format
+          - clang-tidy
+          - clang-tools
+          - clangd
+          - rust-all
+          - texlive
+          - texlive-full
+          - gccgo
+          - golang
+          - gnugo
+          - julia
+          - cargo
+          - protobuf-c-compiler
+          - protobuf-compiler
+          - lz4
+          - cpuinfo
+          - google-perftools
+          - hunspell
+          - hunspell-en-au
+          - hunspell-en-gb
+          - hunspell-en-us
+          - cuda
+          - libcudnn8-dev
+          # libraries
+          - libcpuinfo-dev
+          - libdpkg-dev
+          - libpsimd-dev
+          - libpthreadpool-dev
+          - libboost-all-dev
+          - libfmt-dev
+          - libspdlog-dev
+          - libabsl-dev
+          - libjemalloc-dev
+          - libopencv-dev
+          - libopencv-contrib-dev
+          - libyaml-cpp-dev
+          - librsync-dev
+          - libstb-dev
+          - libgoogle-perftools-dev
+          - libnghttp2-dev
+          - liblz4-dev
+          - libcrypto++-dev
+          - libjsoncpp-dev
+          - libfastjson-dev
+          - libwoff-dev
+          - libfaiss-dev
+          - libonnx-dev
+          - libfp16-dev
+          - libfxdiv-dev
+          - libgloo-dev
+          - libceres-dev
+          - libxnnpack-dev
+          - libpng++-dev
+          - rapidjson-dev
+          - multimedia-devel
+          - libthrust-dev
+          - libnccl-dev
