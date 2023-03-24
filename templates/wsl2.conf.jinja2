@@ -1,0 +1,22 @@
+[boot]
+systemd = true
+
+[automount]
+enabled = true
+mountfstab = true
+root=/mnt/
+options = umask=0022,fmask=0133,dmask=0022,metadata,case=force
+
+[network]
+generatehosts = true
+generateresolvconf = true
+
+[interop]
+enabled = true
+appendwindowspath = false
+
+[user]
+default = {{ ansible_user_id }}
+
+[wsl2]
+guiApplications = true

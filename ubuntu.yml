@@ -4,13 +4,12 @@
   gather_facts: yes
   become: yes
   vars:
-    username: laitingsheng
     codename: jammy
     version:
       major: "22"
       minor: "04"
     locale: en_AU.UTF-8
-    wsl: "{{ ansible_facts['kernel'].endswith('-microsoft-standard-WSL2') }}"
+    wsl2: "{{ ansible_facts['kernel'].endswith('-microsoft-standard-WSL2') }}"
     mirrors:
       # ubuntu: https://au.archive.ubuntu.com/ubuntu
       ubuntu: https://mirrors.aliyun.com/ubuntu
@@ -52,32 +51,35 @@
         update_password: always
     - name: Fix user group settings
       group:
-        name: "{{ username }}"
+        name: "{{ ansible_user_id }}"
         gid: 1000
         state: present
         system: no
         non_unique: no
     - name: Fix user settings
       user:
-        name: "{{ username }}"
+        name: "{{ ansible_user_id }}"
         uid: 1000
         state: present
         system: no
         non_unique: no
         append: no
-        group: "{{ username }}"
+        group: "{{ ansible_user_id }}"
         groups:
-          - users
           - sudo
-          - adm
-          - plugdev
-          - cdrom
-          - dip
           - lxd
           - www-data
         create_home: yes
-        home: "/home/{{ username }}"
+        home: "/home/{{ ansible_user_id }}"
         shell: /usr/bin/zsh
+    - name: Copy WSL2 system configuration if using WSL2
+      template:
+        src: wsl2.conf.jinja2
+        dest: /etc/wsl.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: wsl2
     - name: Empty the APT lists and preferences
       copy:
         content: "# This is left blank intentionally. All repositories can be found in /etc/apt/{{ item }}.d."
@@ -95,14 +97,15 @@
         owner: root
         group: root
         mode: 0644
-    # - name: Remove the APT lists folders
-    #   file:
-    #     state: absent
-    #     path: "/etc/apt/{{ item }}.d"
-    #   with_items:
-    #     - sources.list
-    #     - preferences
-    #     - trusted.gpg
+    - name: Remove the APT lists folders if requested
+      file:
+        state: absent
+        path: "/etc/apt/{{ item }}.d"
+      with_items:
+        - sources.list
+        - preferences
+        - trusted.gpg
+      when: "reset_apt | default(False)"
     - name: Mark all packages as automatically installed
       shell: "dpkg-query -W | awk -F' ' '{print $1}' | xargs apt-mark auto"
     - name: Create the APT lists folders
@@ -123,7 +126,7 @@
         name: "{{ apt_config.name }}"
         key: "{{ apt_config.key }}"
         repo: "{{ apt_config.repo }}"
-      when: "(not wsl and (gui | default(False))) or not (apt_config.gui | default(False))"
+      when: "not (apt_config.gui | default(False)) or (gui | default(False))"
       loop:
         - name: ubuntu
           key:
@@ -148,7 +151,7 @@
           repo:
             urls:
               - "{{ mirrors.nvidia }}/ubuntu{{ version.major }}{{ version.minor }}/x86_64"
-              - "{{ wsl | ternary(mirrors.nvidia + '/wsl-ubuntu/x86_64', None) }}"
+              - "{{ wsl2 | ternary(mirrors.nvidia + '/wsl-ubuntu/x86_64', None) }}"
             distributions:
               - "/"
         - name: githubcli
