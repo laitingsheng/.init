@@ -4,6 +4,7 @@
   gather_facts: yes
   become: yes
   vars:
+    username: "{{ lookup('env', 'USER') }}"
     codename: jammy
     version:
       major: "22"
@@ -11,16 +12,13 @@
     locale: en_AU.UTF-8
     wsl2: "{{ ansible_facts['kernel'].endswith('-microsoft-standard-WSL2') }}"
     mirrors:
-      # ubuntu: https://au.archive.ubuntu.com/ubuntu
-      ubuntu: https://mirrors.aliyun.com/ubuntu
+      ubuntu: https://mirrors.sustech.edu.cn/ubuntu
       # llvm: https://apt.llvm.org
       llvm: https://mirrors.tuna.tsinghua.edu.cn/llvm-apt
       # nvidia: https://developer.download.nvidia.com/compute/cuda/repos
       nvidia: https://developer.download.nvidia.cn/compute/cuda/repos
       # kubernetes: https://apt.kubernetes.io
       kubernetes: https://mirrors.aliyun.com/kubernetes/apt
-      docker: https://download.docker.com/linux/ubuntu
-      # docker: https://mirrors.aliyun.com/docker-ce/linux/ubuntu
   tasks:
     - name: Add NOPASSWD to sudoers
       lineinfile:
@@ -49,29 +47,6 @@
         shell: /bin/bash
         password: "!"
         update_password: always
-    - name: Fix user group settings
-      group:
-        name: "{{ ansible_user_id }}"
-        gid: 1000
-        state: present
-        system: no
-        non_unique: no
-    - name: Fix user settings
-      user:
-        name: "{{ ansible_user_id }}"
-        uid: 1000
-        state: present
-        system: no
-        non_unique: no
-        append: no
-        group: "{{ ansible_user_id }}"
-        groups:
-          - sudo
-          - lxd
-          - www-data
-        create_home: yes
-        home: "/home/{{ ansible_user_id }}"
-        shell: /usr/bin/zsh
     - name: Copy WSL2 system configuration if using WSL2
       template:
         src: wsl2.conf.jinja2
@@ -196,10 +171,10 @@
               - nginx
         - name: docker
           key:
-            url: "{{ mirrors.docker }}/gpg"
+            url: "https://download.docker.com/linux/ubuntu/gpg"
           repo:
             urls:
-              - "{{ mirrors.docker }}"
+              - "https://download.docker.com/linux/ubuntu"
             distributions:
               - "{{ codename }}"
             components:
@@ -275,6 +250,14 @@
         state: latest
         update_cache: yes
         upgrade: dist
+    - name: Install WSL2 system dependencies
+      apt:
+        state: latest
+        update_cache: no
+        name:
+          - ubuntu-wsl
+          - wsl
+      when: wsl2
     - name: Install system dependencies
       apt:
         state: latest
@@ -313,12 +296,14 @@
           - network-manager-ssh
           - speedtest-cli
           - certbot
+          - forensics-all
           - forensics-extra
           - enca
           - gh
           - docker-ce
           - nvidia-docker2
           - kubeadm
+          - ansible
           # development
           - build-essential
           - crossbuild-essential-i386
@@ -383,6 +368,7 @@
           # libraries
           - libcpuinfo-dev
           - libdpkg-dev
+          - librpm-dev
           - libpsimd-dev
           - libpthreadpool-dev
           - libboost-all-dev
@@ -390,6 +376,7 @@
           - libspdlog-dev
           - libabsl-dev
           - libjemalloc-dev
+          - libmimalloc-dev
           - libopencv-dev
           - libopencv-contrib-dev
           - libyaml-cpp-dev
@@ -397,6 +384,8 @@
           - libstb-dev
           - libgoogle-perftools-dev
           - libnghttp2-dev
+          - libnghttp3-dev
+          - libngtcp2-dev
           - liblz4-dev
           - libcrypto++-dev
           - libjsoncpp-dev
@@ -414,3 +403,34 @@
           - multimedia-devel
           - libthrust-dev
           - libnccl-dev
+          - libb2-dev
+          - libhiredis-dev
+          - libssh-gcrypt-dev
+          - libtommath-dev
+          - libtomcrypt-dev
+          - libcrypto++-dev
+          - libcrypto++-utils
+    - name: Fix user group settings
+      group:
+        name: "{{ username }}"
+        gid: 1000
+        state: present
+        system: no
+        non_unique: no
+    - name: Fix user settings
+      user:
+        name: "{{ username }}"
+        uid: 1000
+        state: present
+        system: no
+        non_unique: no
+        append: no
+        group: "{{ username }}"
+        groups:
+          - sudo
+          - lxd
+          - docker
+          - www-data
+        create_home: yes
+        home: "/home/{{ username }}"
+        shell: /usr/bin/zsh
