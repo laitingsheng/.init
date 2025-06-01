@@ -1,0 +1,55 @@
+- name: Modify user settings
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Configure current user primary group
+      become: true
+      ansible.builtin.group:
+        state: present
+        name: "{{ ansible_user_id }}"
+        gid: "{{ ansible_user_gid }}"
+        system: false
+        non_unique: false
+    - name: Configure current user
+      become: true
+      ansible.builtin.user:
+        state: present
+        name: "{{ ansible_user_id }}"
+        uid: "{{ ansible_user_uid }}"
+        group: "{{ ansible_user_id }}"
+        system: false
+        non_unique: false
+        append: false
+        groups:
+          - sudo
+          - adm
+          - systemd-journal
+          - syslog
+          - lxd
+          - docker
+        create_home: true
+        home: "/home/{{ ansible_user_id }}"
+        shell: /usr/bin/zsh
+    - name: Configure root group
+      become: true
+      ansible.builtin.group:
+        state: present
+        name: root
+        gid: 0
+        system: true
+        non_unique: false
+    - name: Configure root user
+      become: true
+      ansible.builtin.user:
+        state: present
+        name: root
+        uid: 0
+        group: root
+        password: '!'
+        update_password: always
+        system: true
+        non_unique: false
+        append: false
+        create_home: false
+        home: /root
+        shell: /bin/bash

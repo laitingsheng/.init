@@ -27,26 +27,6 @@
         regexp: '^%sudo[ \t]+ALL='
         line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
         validate: "/usr/sbin/visudo -cf %s"
-    - name: Fix root group settings
-      group:
-        name: root
-        gid: 0
-        state: present
-        system: yes
-        non_unique: no
-    - name: Fix root settings
-      user:
-        name: root
-        uid: 0
-        state: present
-        system: yes
-        non_unique: no
-        group: root
-        create_home: yes
-        home: /root
-        shell: /bin/bash
-        password: "!"
-        update_password: always
     - name: Copy WSL2 system configuration if using WSL2
       template:
         src: wsl2.conf.jinja2
@@ -410,27 +390,3 @@
           - libtomcrypt-dev
           - libcrypto++-dev
           - libcrypto++-utils
-    - name: Fix user group settings
-      group:
-        name: "{{ username }}"
-        gid: 1000
-        state: present
-        system: no
-        non_unique: no
-    - name: Fix user settings
-      user:
-        name: "{{ username }}"
-        uid: 1000
-        state: present
-        system: no
-        non_unique: no
-        append: no
-        group: "{{ username }}"
-        groups:
-          - sudo
-          - lxd
-          - docker
-          - www-data
-        create_home: yes
-        home: "/home/{{ username }}"
-        shell: /usr/bin/zsh
