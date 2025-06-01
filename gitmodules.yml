@@ -1,0 +1,87 @@
+- name: Add git repositories to home folder
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Clone repositories
+      ansible.builtin.git:
+        repo: "git@github.com:{{ item.repo }}.git"
+        dest: "{{ ansible_user_dir }}/{{ item.path }}"
+        clone: true
+        force: false
+        recursive: true
+        update: true
+        version: "{{ item.version }}"
+      loop:
+        - path: .oh-my-bash
+          repo: ohmybash/oh-my-bash
+          version: master
+        - path: .oh-my-zsh
+          repo: ohmyzsh/ohmyzsh
+          version: master
+        - path: .oh-my-zsh/custom/plugins/zsh-autosuggestions
+          repo: zsh-users/zsh-autosuggestions
+          version: master
+        - path: .oh-my-zsh/custom/plugins/zsh-completions
+          repo: zsh-users/zsh-completions
+          version: master
+        - path: .oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+          repo: zsh-users/zsh-syntax-highlighting
+          version: master
+        - path: .oh-my-zsh/custom/powerlevel10k
+          repo: romkatv/powerlevel10k
+          version: master
+        - path: .vim_runtime
+          repo: amix/vimrc
+          version: master
+        - path: .nano
+          repo: scopatz/nanorc
+          version: master
+    - name: Symlink Powerlevel10k theme
+      ansible.builtin.file:
+        state: link
+        src: "{{ ansible_user_dir }}/.oh-my-zsh/custom/powerlevel10k/powerlevel10k.zsh-theme"
+        dest: "{{ ansible_user_dir }}/.oh-my-zsh/themes/powerlevel10k.zsh-theme"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0644
+    - name: Run vimrc installation script
+      ansible.builtin.command:
+        chdir: "{{ ansible_user_dir }}"
+        argv:
+          - "{{ ansible_user_dir }}/.vim_runtime/install_awesome_vimrc.sh"
+        creates: "{{ ansible_user_dir }}/.vimrc"
+    - name: Copy .nanorc
+      ansible.builtin.copy:
+        src: "{{ ansible_user_dir }}/.nano/nanorc"
+        dest: "{{ ansible_user_dir }}/.nanorc"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0644
+    - name: Create folder for custom BASH scripts
+      ansible.builtin.file:
+        state: directory
+        dest: "{{ ansible_user_dir }}/.oh-my-bash/custom/plugins/system-utils"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0755
+    - name: Copy custom BASH scripts
+      ansible.builtin.copy:
+        src: system-utils.sh
+        dest: "{{ ansible_user_dir }}/.oh-my-bash/custom/plugins/system-utils/system-utils.plugin.sh"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0644
+    - name: Create folder for custom ZSH scripts
+      ansible.builtin.file:
+        state: directory
+        dest: "{{ ansible_user_dir }}/.oh-my-zsh/custom/plugins/system-utils"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0755
+    - name: Copy custom ZSH scripts
+      ansible.builtin.copy:
+        src: system-utils.sh
+        dest: "{{ ansible_user_dir }}/.oh-my-zsh/custom/plugins/system-utils/system-utils.plugin.zsh"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0644
