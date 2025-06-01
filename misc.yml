@@ -1,0 +1,56 @@
+- name: Miscellaneous configurations
+  hosts: localhost
+  gather_facts: true
+  become: true
+  vars:
+    locale: en_AU.UTF-8
+  tasks:
+    - name: Ensure the locale exists
+      community.general.locale_gen:
+        state: present
+        name: "{{ locale }}"
+    - name: Update default locales
+      ansible.builtin.copy:
+        content: |
+          LANG={{ locale }}
+          LC_ALL={{ locale }}
+          LANGUAGE={{ locale }}
+        dest: "{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - /etc/locale.conf
+        - /etc/default/locale
+    - name: Update time zone
+      community.general.timezone:
+        name: Asia/Shanghai
+    - name: Disable inactive state targets
+      ansible.builtin.systemd:
+        state: stopped
+        enabled: false
+        masked: true
+        scope: system
+        name: "{{ item }}.target"
+      loop:
+        - sleep
+        - suspend
+        - hibernate
+        - hybrid-sleep
+    - name: Edit /etc/login.defs
+      ansible.builtin.lineinfile:
+        state: present
+        path: /etc/login.defs
+        owner: root
+        group: root
+        mode: '0644'
+        regexp: "^#?\\s*({{ item.key }})\\s+"
+        line: "\\1 {{ item.value }}"
+        backrefs: true
+      loop:
+        - key: UMASK
+          value: '022'
+        - key: HOME_MODE
+          value: '0750'
+        - key: USERGROUPS_ENAB
+          value: 'no'
