@@ -1,0 +1,67 @@
+- name: Configure WSL2
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Add NOPASSWD to sudoers
+      become: true
+      ansible.builtin.lineinfile:
+        state: present
+        path: /etc/sudoers
+        regexp: '^%sudo[ \t]+ALL='
+        line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
+        validate: "/usr/sbin/visudo -cf %s"
+    - name: Configure global WSL2 settings
+      community.general.ini_file:
+        state: present
+        path: "/mnt/c/Users/{{ ansible_user_id }}/.wslconfig"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: 0644
+        section: wsl2
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      loop:
+        - option: swap
+          value: 0
+        - option: nestedVirtualization
+          value: 'false'
+        - option: networkingMode
+          value: mirrored
+        - option: firewall
+          value: 'false'
+        - option: dnsTunneling
+          value: 'false'
+        - option: autoProxy
+          value: 'false'
+    - name: Configure current WSL2 settings
+      become: true
+      community.general.ini_file:
+        state: present
+        path: /etc/wsl.conf
+        owner: root
+        group: root
+        mode: 0644
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+      loop:
+        - section: boot
+          option: systemd
+          value: 'true'
+        - section: automount
+          option: options
+          value: umask=0022,fmask=0133,dmask=0022,metadata,case=force
+        - section: interop
+          option: appendWindowsPath
+          value: 'false'
+        - section: user
+          option: default
+          value: "{{ ansible_user_id }}"
+    - name: Install APT package for WSL2
+      become: true
+      ansible.builtin.apt:
+        state: present
+        update_cache: true
+        name:
+          - ubuntu-wsl
+          - wslu

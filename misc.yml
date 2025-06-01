@@ -46,7 +46,7 @@
         mode: '0644'
         section: global
         option: index-url
-        value: https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
+        value: https://pypi.tuna.tsinghua.edu.cn/simple
     - name: Edit /etc/login.defs
       ansible.builtin.lineinfile:
         state: present

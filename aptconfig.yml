@@ -1,0 +1,156 @@
+- name: Configure APT
+  hosts: localhost
+  gather_facts: true
+  become: true
+  vars:
+    apt_types:
+      - folder: sources.list.d
+        suffix: list
+      - folder: trusted.gpg.d
+        suffix: gpg
+      - folder: trusted.gpg.d
+        suffix: gpg~
+    version:
+      kubernetes: 1.33
+    mirror:
+      ubuntu: https://mirror.tuna.tsinghua.edu.cn/ubuntu
+      docker: https://mirror.tuna.tsinghua.edu.cn/docker-ce/linux/ubuntu
+      llvm: "https://mirror.tuna.tsinghua.edu.cn/llvm-apt/{{ ansible_distribution_release }}"
+      kitware: https://apt.kitware.com
+      bazel: https://mirror.tuna.tsinghua.edu.cn/bazel-apt
+      terraform: https://apt.releases.hashicorp.com
+      helm: https://baltocdn.com/helm
+      kubernetes: "https://mirror.tuna.tsinghua.edu.cn/kubernetes/core:/stable:/v{{ version.kubernetes }}/deb"
+      postgresql: https://apt.postgresql.org/pub/repos/apt
+      githubcli: https://cli.github.com/packages
+      nginx: https://nginx.org
+      ppa-toolchain: https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu
+      ppa-python: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
+    key_id:
+      bazel: '71A1D0EFCFEB6281FD0437C93D5919B448457EE0'
+      ppa-toolchain: 'C8EC952E2A0E1FBDC5090F6A2C277A0A352154E5'
+      ppa-python: 'F23C5A6CF475977595C89F51BA6932366A755776'
+    key_url:
+      docker: "{{ mirror.docker }}/gpg"
+      llvm: https://apt.llvm.org/llvm-snapshot.gpg.key
+      kitware: "{{ mirror.kitware }}/keys/kitware-archive-latest.asc"
+      terraform: "{{ mirror.terraform }}/gpg"
+      helm: "{{ mirror.helm }}/signing.asc"
+      kubernetes: "{{ mirror.kubernetes }}/Release.key"
+      postgresql: "{{ mirror.postgresql }}/ACCC4CF8.asc"
+      githubcli: "{{ mirror.githubcli }}/githubcli-archive-keyring.gpg"
+      nginx: "{{ mirror.nginx }}/keys/nginx_signing.key"
+    key_suffix:
+      githubcli: gpg
+  tasks:
+    - name: Clear existing APT contents
+      ansible.builtin.copy:
+        content: "{{ item.content | default('') }}"
+        dest: "/etc/apt/{{ item.path }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - path: sources.list
+          content: |
+            # leave blank and move to sources.list.d
+        - path: trusted.gpg
+    - name: Create the APT lists folders
+      ansible.builtin.file:
+        state: directory
+        path: "/etc/apt/{{ item }}"
+        owner: root
+        group: root
+        mode: '0755'
+      loop:
+        - keyrings
+        - preferences.d
+        - sources.list.d
+        - trusted.gpg.d
+    - name: Purge existing APT files
+      ansible.builtin.file:
+        state: absent
+        path: "/etc/apt/{{ item[0].folder }}/{{ item[1].key }}.{{ item[0].suffix }}"
+      with_nested:
+        - "{{ apt_types }}"
+        - "{{ mirror | dict2items }}"
+    - name: Fetch APT keys by ID
+      ansible.builtin.get_url:
+        url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{{ item.value }}"
+        dest: "/etc/apt/keyrings/{{ item.key }}.asc"
+        owner: root
+        group: root
+        mode: '0644'
+      with_dict: "{{ key_id }}"
+    - name: Add extra APT keys
+      ansible.builtin.get_url:
+        url: "{{ item.value }}"
+        dest: "/etc/apt/keyrings/{{ item.key }}.{{ key_suffix[item.key] | default('asc') }}"
+        owner: root
+        group: root
+        mode: '0644'
+      with_dict: "{{ key_url }}"
+    - name: Add Ubuntu APT repository
+      ansible.builtin.apt_repository:
+        state: present
+        filename: ubuntu
+        repo: "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] {{ mirror.ubuntu }} {{ item }} main restricted universe multiverse"
+        update_cache: false
+      loop:
+        - "{{ ansible_distribution_release }}"
+        - "{{ ansible_distribution_release }}-backports"
+        - "{{ ansible_distribution_release }}-proposed"
+        - "{{ ansible_distribution_release }}-security"
+        - "{{ ansible_distribution_release }}-updates"
+    - name: Add APT repositories
+      ansible.builtin.apt_repository:
+        state: present
+        filename: "{{ item.name }}"
+        repo: "deb [signed-by=/etc/apt/keyrings/{{ item.name }}.{{ key_suffix[item.name] | default('asc') }}] {{ mirror[item.name] }}{{ item.path | default('') }} {{ item.distribution | default(ansible_distribution_release) }} {{ ' '.join(item.components | default(['main'])) }}"
+        update_cache: false
+      loop:
+        - name: docker
+          components:
+            - stable
+        - name: llvm
+          distribution: "llvm-toolchain-{{ ansible_distribution_release }}"
+          components:
+            - main
+        - name: kitware
+          path: /ubuntu
+          components:
+            - main
+        - name: bazel
+          distribution: stable
+          components:
+            - jdk1.8
+        - name: terraform
+          components:
+            - main
+        - name: helm
+          path: /stable/debian
+          distribution: all
+          components:
+            - main
+        - name: kubernetes
+          distribution: /
+          components: []
+        - name: postgresql
+          distribution: "{{ ansible_distribution_release }}-pgdg"
+          components:
+            - main
+        - name: githubcli
+          distribution: stable
+          components:
+            - main
+        - name: nginx
+          path: /packages/ubuntu
+          distribution: "{{ ansible_distribution_release }}"
+          components:
+            - nginx
+        - name: ppa-toolchain
+          components:
+            - main
+        - name: ppa-python
+          components:
+            - main
