@@ -13,28 +13,28 @@
           - ubuntu-minimal
           - ubuntu-server
           - ubuntu-standard
+          - lsb
+          - zsh
+          - bat
+          - tree
           # utilities
           - locales-all
-          - lsb
           - ifupdown-extra
+          - net-tools
           - grepcidr
+          - enca
           - errno
           - parallel
           - expect
-          - mle
           - p7zip-full
           - neofetch
           - httpie
           - aria2
-          - bat
-          - tree
-          - zsh
           - acl
-          - net-tools
+          # cloud
           - docker-ce
           - docker-compose
           - podman-toolbox
-          - enca
           - gh
           - kubectl
           - helm
@@ -52,36 +52,27 @@
           - gdc
           - gcovr
           - lcov
+          - libboost-all-dev
           - flex
           - bison
           - git-all
-          - git-ftp
           - git-lfs
+          - git-ftp
           - git-review
           - grip
           - subversion
-          - ruby-all-dev
-          - ruby-full
           - python3-all-dev
           - gradle
           - maven
           - default-jdk
-          - valgrind-mpi
-          - cppcheck
-          - cpplint
-          - iwyu
-          - shfmt
-          - shellcheck
-          - rust-all
-          - cargo
-          - nodejs
           - patchelf
           - lz4
           - cpuinfo
           - crudini
-          # libraries
           - inotify-tools
           - packaging-dev
           - libdpkg-dev
           - librpm-dev
           - libssh-dev
+          # extras
+          - texlive-full

@@ -21,7 +21,7 @@
       terraform: https://apt.releases.hashicorp.com
       helm: https://baltocdn.com/helm
       kubernetes: "https://mirror.tuna.tsinghua.edu.cn/kubernetes/core:/stable:/v{{ version.kubernetes }}/deb"
-      postgresql: https://apt.postgresql.org/pub/repos/apt
+      postgresql: https://mirrors.tuna.tsinghua.edu.cn/postgresql/repos/apt
       githubcli: https://cli.github.com/packages
       nginx: https://nginx.org
       ppa-toolchain: https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu
@@ -106,8 +106,13 @@
       ansible.builtin.apt_repository:
         state: present
         filename: "{{ item.name }}"
-        repo: "deb [signed-by=/etc/apt/keyrings/{{ item.name }}.{{ key_suffix[item.name] | default('asc') }}] {{ mirror[item.name] }}{{ item.path | default('') }} {{ item.distribution | default(ansible_distribution_release) }} {{ ' '.join(item.components | default(['main'])) }}"
+        repo: "deb [signed-by={{ keyfile }}] {{ url }} {{ distribution }} {{ components }}"
         update_cache: false
+      vars:
+        keyfile: "/etc/apt/keyrings/{{ item.name }}.{{ key_suffix[item.name] | default('asc') }}"
+        url: "{{ mirror[item.name] }}{{ item.path | default('') }}"
+        distribution: "{{ item.distribution | default(ansible_distribution_release) }}"
+        components: "{{ ' '.join(item.components | default(['main'])) }}"
       loop:
         - name: docker
           components:
