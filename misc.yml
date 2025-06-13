@@ -37,16 +37,6 @@
         - suspend
         - hibernate
         - hybrid-sleep
-    - name: Configure PIP index URL
-      community.general.ini_file:
-        state: present
-        dest: /etc/pip.conf
-        owner: root
-        group: root
-        mode: '0644'
-        section: global
-        option: index-url
-        value: https://pypi.tuna.tsinghua.edu.cn/simple
     - name: Edit /etc/login.defs
       ansible.builtin.lineinfile:
         state: present
