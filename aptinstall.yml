@@ -43,6 +43,10 @@
           # development
           - build-essential
           - g++-multilib
+          - g++-14-multilib
+          - g++-13-multilib
+          - g++-12-multilib
+          - g++-11-multilib
           - gcc-opt
           - mold
           - cmake-extras
@@ -60,11 +64,28 @@
           - git-ftp
           - git-review
           - grip
-          - subversion
           - python3-all-dev
+          - python3-full
+          - python3.13-dev
+          - python3.13-full
+          - python3.12-dev
+          - python3.12-full
+          - python3.11-dev
+          - python3.11-full
+          - python3.10-dev
+          - python3.10-full
+          - python3.9-dev
+          - python3.9-full
+          - python3.8-dev
+          - python3.8-full
           - gradle
           - maven
           - default-jdk
+          - openjdk-21-jdk
+          - openjdk-17-jdk
+          - openjdk-11-jdk
+          - openjdk-8-jdk
+          - kotlin
           - patchelf
           - lz4
           - cpuinfo
