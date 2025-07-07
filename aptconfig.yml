@@ -24,6 +24,8 @@
       postgresql: https://mirrors.tuna.tsinghua.edu.cn/postgresql/repos/apt
       githubcli: https://cli.github.com/packages
       nginx: https://nginx.org
+      microsoft: https://packages.microsoft.com
+      node: https://deb.nodesource.com
       ppa-toolchain: https://ppa.launchpadcontent.net/ubuntu-toolchain-r/test/ubuntu
       ppa-python: https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu
     key_id:
@@ -40,6 +42,8 @@
       postgresql: "{{ mirror.postgresql }}/ACCC4CF8.asc"
       githubcli: "{{ mirror.githubcli }}/githubcli-archive-keyring.gpg"
       nginx: "{{ mirror.nginx }}/keys/nginx_signing.key"
+      microsoft: "{{ mirror.microsoft }}/keys/microsoft.asc"
+      node: "{{ mirror.node }}/gpgkey/nodesource-repo.gpg.key"
     key_suffix:
       githubcli: gpg
   tasks:
@@ -119,43 +123,40 @@
             - stable
         - name: llvm
           distribution: "llvm-toolchain-{{ ansible_distribution_release }}"
-          components:
-            - main
         - name: kitware
           path: /ubuntu
-          components:
-            - main
         - name: bazel
           distribution: stable
           components:
             - jdk1.8
         - name: terraform
-          components:
-            - main
         - name: helm
           path: /stable/debian
           distribution: all
-          components:
-            - main
         - name: kubernetes
           distribution: /
           components: []
         - name: postgresql
           distribution: "{{ ansible_distribution_release }}-pgdg"
-          components:
-            - main
         - name: githubcli
           distribution: stable
-          components:
-            - main
         - name: nginx
           path: /packages/ubuntu
           distribution: "{{ ansible_distribution_release }}"
           components:
             - nginx
+        - name: microsoft
+          path: "/ubuntu/{{ ansible_distribution_version }}/prod"
+        - name: microsoft
+          path: /repos/azure-cli
+        - name: microsoft
+          path: /repos/code
+          distribution: stable
+        - name: microsoft
+          path: /repos/edge
+          distribution: stable
+        - name: node
+          path: /node_22.x
+          distribution: nodistro
         - name: ppa-toolchain
-          components:
-            - main
         - name: ppa-python
-          components:
-            - main
