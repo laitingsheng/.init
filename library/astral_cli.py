@@ -18,17 +18,15 @@ TOOL_BINARIES: Final[dict[str, list[str]]] = {
 def main() -> None:
     module = AnsibleModule(
         argument_spec={
-            "tool": {
-                "type": "str",
-                "required": True,
-                "choices": list(TOOL_BINARIES),
-            },
-            "prefix": {"type": "path", "default": "/usr/local/bin"},
+            "tool": {"type": "str", "required": True, "choices": list(TOOL_BINARIES)},
+            "install_base": {"type": "path", "default": "/usr/local/astral"},
+            "bin_dir": {"type": "path", "default": "/usr/local/bin"},
             "version": {"type": "str", "required": True},
             "arch": {"type": "str", "required": True},
             "platform": {"type": "str", "required": True},
             "os": {"type": "str", "required": True},
             "abi": {"type": "str", "required": True},
+            "force": {"type": "bool", "default": False},
         },
         supports_check_mode=True,
     )
@@ -38,41 +36,45 @@ def main() -> None:
     platform_name = module.params["platform"]
     os_name = module.params["os"]
     abi = module.params["abi"]
-    prefix = Path(module.params["prefix"]).expanduser()
+    force = module.params["force"]
+    install_base = Path(module.params["install_base"])
+    bin_dir = Path(module.params["bin_dir"])
+    binaries = TOOL_BINARIES[tool]
+
+    version_dir = install_base / tool / version
+    binary_paths = [version_dir / binary for binary in binaries]
+    links = [bin_dir / binary for binary in binaries]
+
+    if not force and all(
+        bp.is_file() and lk.is_symlink() and lk.resolve() == bp.resolve()
+        for bp, lk in zip(binary_paths, links)
+    ):
+        module.exit_json(changed=False, msg=f"{tool} {version} already installed")
+
+    if module.check_mode:
+        module.exit_json(changed=True, msg=f"Would install {tool} {version}")
+
     target_triple = f"{arch}-{platform_name}-{os_name}-{abi}"
     url = f"https://github.com/astral-sh/{tool}/releases/download/{version}/{tool}-{target_triple}.tar.gz"
-    if module.check_mode:
-        response, info = fetch_url(module, url, method="HEAD")
-        if info["status"] != http.HTTPStatus.OK:
-            module.fail_json(msg=f"Failed to check URL {url}: {info['msg']}")
-        content_length = int(info.get("content-length", 0))
-        module.exit_json(
-            changed=True,
-            msg=f"Would download {content_length} bytes and install {tool} {version} to {prefix}",
-        )
-    try:
-        response, info = fetch_url(module, url)
-        if info["status"] != http.HTTPStatus.OK:
-            module.fail_json(msg=f"Failed to download {url}: {info['msg']}")
-        data = response.read()
-        binaries = TOOL_BINARIES[tool]
-        archive_prefix = f"{tool}-{target_triple}"
-        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
-            for binary in binaries:
-                member_path = f"{archive_prefix}/{binary}"
-                extracted = tar.extractfile(member_path)
-                if extracted is None:
-                    module.fail_json(msg=f"Failed to extract {member_path}")
-                target = prefix / binary
-                with target.open("wb") as f:
-                    f.write(extracted.read())
-                target.chmod(0o755)
-        module.exit_json(
-            changed=True,
-            msg=f"Installed {tool} {version} to {prefix}: {', '.join(binaries)}",
-        )
-    except Exception as e:
-        module.fail_json(msg=f"Failed to install {tool}: {e}")
+    response, info = fetch_url(module, url)
+    if info["status"] != http.HTTPStatus.OK:
+        module.fail_json(**info)
+
+    version_dir.mkdir(parents=True, exist_ok=True)
+    archive_prefix = f"{tool}-{target_triple}"
+    with tarfile.open(fileobj=io.BytesIO(response.read())) as tar:
+        for binary, binary_path in zip(binaries, binary_paths):
+            extracted = tar.extractfile(f"{archive_prefix}/{binary}")
+            if extracted is None:
+                module.fail_json(msg=f"Failed to extract {archive_prefix}/{binary}")
+            binary_path.write_bytes(extracted.read())
+            binary_path.chmod(0o755)
+
+    for link, binary_path in zip(links, binary_paths):
+        link.unlink(missing_ok=True)
+        link.symlink_to(binary_path.relative_to(bin_dir, walk_up=True))
+
+    module.exit_json(changed=True, msg=f"Installed {tool} {version}")
 
 
 if __name__ == "__main__":
