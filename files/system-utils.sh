@@ -6,16 +6,16 @@ function _wrap_colour() {
     prefix=$1
     shift 1
 
-    for command in $*
+    for command in "$@"
     do
         name="${prefix}${command}"
-        alias ${name}="${name} --color=auto"
+        alias "${name}"="${name} --color=auto"
     done
 }
 
 function _augment_gnu_ls() {
     ls="${1:-}ls"
-    alias ${ls}="${ls} --color=auto --group-directories-first"
+    alias "${ls}"="${ls} --color=auto --group-directories-first"
 }
 
 function _ls_aliases() {
@@ -26,26 +26,26 @@ function _ls_aliases() {
     alias "${prefix}ll"="${ls} -alhF"
 }
 
-case $OSTYPE in
+case "${OSTYPE}" in
     darwin*)
         export CLICOLOR=1
 
         alias ls='ls -G'
-        _wrap_colour '' grep egrep fgrep
+        _wrap_colour '' grep
         _ls_aliases
 
         _dircolors "$(brew --prefix)/bin/gdircolors"
-        _wrap_colour g dir vdir grep egrep fgrep
+        _wrap_colour g dir vdir grep
         _augment_gnu_ls g
         _ls_aliases g
         ;;
     linux*)
         _dircolors '/usr/bin/dircolors'
-        _wrap_colour '' dir vdir grep egrep fgrep
+        _wrap_colour '' dir vdir grep
         _augment_gnu_ls
         _ls_aliases
 
-        case $(uname -r) in
+        case "$(uname -r)" in
             *-microsoft-standard-WSL2)
                 PATH="$PATH:/mnt/c/Windows/System32:/mnt/c/Windows"
                 ;;

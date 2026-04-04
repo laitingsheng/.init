@@ -69,7 +69,7 @@ class APTInstall:
         for pkg in self._cache.get_changes():
             self._changed = True
             if pkg.marked_delete:
-                del self._version_after[pkg.name]
+                self._version_after.pop(pkg.name, None)
             elif pkg.marked_upgrade:
                 self._version_after[pkg.name] = pkg.candidate.version
             elif pkg.marked_install:

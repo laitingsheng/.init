@@ -41,13 +41,13 @@ def main() -> None:
     bin_dir = Path(module.params["bin_dir"])
     binaries = TOOL_BINARIES[tool]
 
-    version_dir = install_base / tool / version
+    tool_dir = install_base / tool
+    version_dir = tool_dir / version
     binary_paths = [version_dir / binary for binary in binaries]
     links = [bin_dir / binary for binary in binaries]
 
     if not force and all(
-        bp.is_file() and lk.is_symlink() and lk.resolve() == bp.resolve()
-        for bp, lk in zip(binary_paths, links)
+        bp.is_file() and lk.is_symlink() and lk.resolve() == bp.resolve() for bp, lk in zip(binary_paths, links)
     ):
         module.exit_json(changed=False, msg=f"{tool} {version} already installed")
 
@@ -60,7 +60,12 @@ def main() -> None:
     if info["status"] != http.HTTPStatus.OK:
         module.fail_json(**info)
 
-    version_dir.mkdir(parents=True, exist_ok=True)
+    install_base.mkdir(exist_ok=True)
+    install_base.chmod(0o755)
+    tool_dir.mkdir(exist_ok=True)
+    tool_dir.chmod(0o755)
+    version_dir.mkdir(exist_ok=True)
+    version_dir.chmod(0o755)
     archive_prefix = f"{tool}-{target_triple}"
     with tarfile.open(fileobj=io.BytesIO(response.read())) as tar:
         for binary, binary_path in zip(binaries, binary_paths):

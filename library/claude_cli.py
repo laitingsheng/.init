@@ -51,7 +51,10 @@ def main() -> None:
     if info["status"] != http.HTTPStatus.OK:
         module.fail_json(**info)
 
-    version_dir.mkdir(parents=True, exist_ok=True)
+    install_base.mkdir(exist_ok=True)
+    install_base.chmod(0o755)
+    version_dir.mkdir(exist_ok=True)
+    version_dir.chmod(0o755)
     binary_path.write_bytes(response.read())
     binary_path.chmod(0o755)
 

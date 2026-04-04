@@ -1,0 +1,257 @@
+- name: Configure APT
+  hosts: localhost
+  gather_facts: true
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    version:
+      kubernetes: 1.33
+      nodejs: 22
+    url:
+      ubuntu: https://nvidia.archive.ubuntu.com/ubuntu
+      docker: https://download.docker.com/linux/ubuntu
+      githubcli: https://cli.github.com/packages
+      fluentbit: https://packages.fluentbit.io
+      hashicorp: https://apt.releases.hashicorp.com
+      helm: https://packages.buildkite.com/helm-linux/helm-debian
+      kubernetes: "https://pkgs.k8s.io/core:/stable:/v{{ version.kubernetes }}/deb"
+      microsoft: https://packages.microsoft.com
+      nodesource: https://deb.nodesource.com
+      perforce: https://package.perforce.com
+      postgresql: https://apt.postgresql.org/pub/repos/apt
+    keys:
+      - name: docker
+        url: "{{ url.docker }}/gpg"
+      - name: fluentbit
+        url: "{{ url.fluentbit }}/fluentbit.key"
+      - name: githubcli
+        url: "{{ url.githubcli }}/githubcli-archive-keyring.gpg"
+        suffix: gpg
+      - name: hashicorp
+        url: "{{ url.hashicorp }}/gpg"
+      - name: helm
+        url: "{{ url.helm }}/gpgkey"
+      - name: kubernetes
+        url: "{{ url.kubernetes }}/Release.key"
+      - name: microsoft
+        url: "{{ url.microsoft }}/keys/microsoft.asc"
+      - name: nodejs
+        url: "{{ url.nodesource }}/gpgkey/nodesource-repo.gpg.key"
+      - name: perforce
+        url: "{{ url.perforce }}/perforce.pubkey"
+      - name: postgresql
+        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+      - name: ubuntu
+        path: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+    repos:
+      - name: docker
+        url: "{{ url.docker }}"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - stable
+      - name: fluentbit
+        url: "{{ url.fluentbit }}/ubuntu/{{ ansible_distribution_release }}"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - main
+      - name: githubcli
+        url: "{{ url.githubcli }}"
+        keyring_suffix: gpg
+        distributions:
+          - stable
+        components:
+          - main
+      - name: hashicorp
+        url: "{{ url.hashicorp }}"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - main
+      - name: helm
+        url: "{{ url.helm }}/any"
+        distributions:
+          - any
+        components:
+          - main
+      - name: kubernetes
+        url: "{{ url.kubernetes }}"
+        distributions:
+          - /
+      - name: microsoft
+        url: "{{ url.microsoft }}/ubuntu/{{ ansible_distribution_version }}/prod"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - main
+      - name: microsoft
+        url: "{{ url.microsoft }}/repos/azure-cli"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - main
+      - name: microsoft
+        url: "{{ url.microsoft }}/repos/code"
+        distributions:
+          - stable
+        components:
+          - main
+      - name: microsoft
+        url: "{{ url.microsoft }}/repos/edge"
+        distributions:
+          - stable
+        components:
+          - main
+      - name: nodejs
+        url: "{{ url.nodesource }}/node_{{ version.nodejs }}.x"
+        distributions:
+          - nodistro
+        components:
+          - main
+      - name: perforce
+        url: "{{ url.perforce }}/apt/ubuntu"
+        distributions:
+          - "{{ ansible_distribution_release }}"
+        components:
+          - release
+      - name: postgresql
+        url: "{{ url.postgresql }}"
+        distributions:
+          - "{{ ansible_distribution_release }}-pgdg"
+        components:
+          - main
+      - name: ubuntu
+        url: "{{ url.ubuntu }}"
+        keypath: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+        distributions:
+          - "{{ ansible_distribution_release }}"
+          - "{{ ansible_distribution_release }}-backports"
+          - "{{ ansible_distribution_release }}-proposed"
+          - "{{ ansible_distribution_release }}-security"
+          - "{{ ansible_distribution_release }}-updates"
+        components:
+          - main
+          - restricted
+          - universe
+          - multiverse
+  tasks:
+    - name: Configure APT keyrings
+      aptkey:
+        keys: "{{ keys }}"
+    - name: Configure APT repositories
+      aptrepository:
+        repositories: "{{ repos }}"
+        update_cache: true
+    - name: Install and configure APT packages
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      aptinstall:
+        install:
+          - grub-efi
+          - linux-generic-hwe-{{ ansible_distribution_version }}
+          - ubuntu-minimal
+          - ubuntu-standard
+          - ubuntu-server
+          - acl
+          - ansible-lint
+          - aria2
+          - bat
+          - cpuinfo
+          - crudini
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose
+          - enca
+          - errno
+          - expect
+          - fluent-bit
+          - gh
+          - git-all
+          - git-lfs
+          - grepcidr
+          - helm
+          - httpie
+          - imagemagick
+          - ifupdown-extra
+          - inotify-tools
+          - kubectl
+          - language-pack-en
+          - libdpkg-dev
+          - librpm-dev
+          - libssh-dev
+          - libuser
+          - locales-all
+          - lz4
+          - mtools
+          - neofetch
+          - net-tools
+          - nfs-common
+          - nodejs
+          - optipng
+          - p7zip-full
+          - packaging-dev
+          - parallel
+          - patchelf
+          - podman-toolbox
+          - postgresql-client
+          - pylint
+          - python3-all-dev
+          - python3-apt
+          - python3-boto3
+          - python3-dotenv
+          - python3-flake8-black
+          - python3-full
+          - python3-git
+          - python3-gitlab
+          - python3-gnupg
+          - python3-httpx
+          - python3-ldap
+          - python3-ldap3
+          - python3-openshift
+          - python3-pip
+          - python3-psycopg
+          - python3-psycopg2
+          - python3-semver
+          - python3-sshtunnel
+          - python3-toml
+          - python3-yaml
+          - terraform
+          - tree
+          - vault
+          - webp
+          - yq
+          - zsh
+        purge:
+          - cachefilesd
+          - mdatp
+        purge_patterns:
+          - "*apache2*"
+          - "*bluetooth*"
+          - "*cups*"
+          - "*desktop*"
+          - "*gdm*"
+          - "*gnome*"
+          - "*gtk*"
+          - "*office*"
+          - "*pipewire*"
+          - "*plymouth*"
+          - "*pulseaudio*"
+          - "*qemu*"
+          - "*sssd*"
+          - "*stress*"
+          - "*tracker*"
+          - "*vnc*"
+          - "alsa*"
+          - "autofs*"
+          - "cifs*"
+          - "gsettings*"
+          - "gstreamer*"
+          - "libnss-*"
+          - "libsss-*"
+          - "network-manager*"
+          - "printer*"
+          - "qt*"
+          - "xfont*"
+          - "xinit*"
+          - "xinput*"

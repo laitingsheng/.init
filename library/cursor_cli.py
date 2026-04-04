@@ -35,8 +35,10 @@ def main() -> None:
     binary_path = version_dir / BINARY_NAME
     links = [bin_dir / name for name in LINK_NAMES]
 
-    if not force and binary_path.is_file() and all(
-        link.is_symlink() and link.resolve() == binary_path.resolve() for link in links
+    if (
+        not force
+        and binary_path.is_file()
+        and all(link.is_symlink() and link.resolve() == binary_path.resolve() for link in links)
     ):
         module.exit_json(changed=False, msg=f"cursor-agent {version} already installed")
 
@@ -48,7 +50,10 @@ def main() -> None:
     if info["status"] != http.HTTPStatus.OK:
         module.fail_json(**info)
 
-    version_dir.mkdir(parents=True, exist_ok=True)
+    install_base.mkdir(exist_ok=True)
+    install_base.chmod(0o755)
+    version_dir.mkdir(exist_ok=True)
+    version_dir.chmod(0o755)
     with tarfile.open(fileobj=io.BytesIO(response.read())) as tar:
         members = tar.getmembers()
         for m in members:

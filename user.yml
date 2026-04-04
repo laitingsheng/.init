@@ -1,55 +1,90 @@
 - name: Modify user settings
   hosts: localhost
   gather_facts: true
+  become: true
   tasks:
-    - name: Configure current user primary group
-      become: true
-      ansible.builtin.group:
-        state: present
-        name: "{{ ansible_user_id }}"
-        gid: "{{ ansible_user_gid }}"
-        system: false
-        non_unique: false
-    - name: Configure current user
-      become: true
-      ansible.builtin.user:
-        state: present
-        name: "{{ ansible_user_id }}"
-        uid: "{{ ansible_user_uid }}"
-        group: "{{ ansible_user_id }}"
-        system: false
-        non_unique: false
-        append: false
-        groups:
-          - sudo
-          - adm
-          - systemd-journal
-          - syslog
-          - lxd
-          - docker
-        create_home: true
-        home: "/home/{{ ansible_user_id }}"
-        shell: /usr/bin/zsh
-    - name: Configure root group
-      become: true
-      ansible.builtin.group:
-        state: present
-        name: root
-        gid: 0
-        system: true
-        non_unique: false
-    - name: Configure root user
-      become: true
-      ansible.builtin.user:
-        state: present
-        name: root
-        uid: 0
+    - name: Edit /etc/login.defs
+      ansible.builtin.lineinfile:
+        backrefs: true
+        backup: false
+        create: false
         group: root
-        password: '!'
-        update_password: always
+        line: "\\1 {{ item.value }}"
+        mode: "0644"
+        owner: root
+        path: /etc/login.defs
+        regexp: "^#?\\s*({{ item.key }})\\s+"
+        state: present
+      loop:
+        - key: HOME_MODE
+          value: "0750"
+        - key: UMASK
+          value: "022"
+        - key: USERGROUPS_ENAB
+          value: "no"
+      loop_control:
+        label: "{{ item.key }} => {{ item.value }}"
+    - name: Create system groups
+      ansible.builtin.group:
+        name: "{{ item }}"
+        state: present
         system: true
-        non_unique: false
+      loop:
+        - docker
+        - ssl-cert
+        - www-data
+    - name: Create users
+      ansible.builtin.user:
         append: false
-        create_home: false
-        home: /root
-        shell: /bin/bash
+        create_home: true
+        group: "{{ item.value.group }}"
+        groups: "{{ item.value.groups }}"
+        home: "{{ item.value.home }}"
+        move_home: false
+        name: "{{ item.key }}"
+        password: "!"
+        shell: /usr/bin/zsh
+        system: false
+        uid: "{{ item.value.uid | default(omit) }}"
+        umask: "027"
+        update_password: on_create
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: Remove group same as user
+      ansible.builtin.group:
+        name: "{{ item.key }}"
+        state: absent
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: Configure SSH keys
+      ansible.posix.authorized_key:
+        exclusive: true
+        follow: false
+        key: "{{ item.value.ssh_keys }}"
+        manage_dir: true
+        state: present
+        user: "{{ item.key }}"
+      when: item.value.ssh_keys is defined
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: Configure passwordless sudo
+      ansible.builtin.copy:
+        content: |
+          {% for user in users %}
+          {{ user }} ALL=(ALL:ALL) NOPASSWD: ALL
+          {% endfor %}
+        dest: /etc/sudoers.d/00-localusers
+        group: root
+        mode: "0440"
+        owner: root
+        validate: 'visudo -cf %s'
+    - name: Purge legacy sudoer files
+      ansible.builtin.file:
+        path: "/etc/sudoers.d/{{ item.key }}"
+        state: absent
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"

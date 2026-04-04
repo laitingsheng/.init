@@ -1,0 +1,121 @@
+- name: Configure system
+  hosts: localhost
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Disable inactive state targets
+      ansible.builtin.systemd_service:
+        daemon_reexec: false
+        daemon_reload: false
+        enabled: false
+        masked: true
+        name: "{{ item }}.target"
+        scope: system
+        state: stopped
+      loop:
+        - hibernate
+        - hybrid-sleep
+        - sleep
+        - suspend
+    - name: Configure network
+      netplan:
+        ethernets:
+          - addresses:
+              - "{{ nic.ip }}/{{ nic.prefix }}"
+            dhcp4: true
+            dhcp6: true
+            macaddress: "{{ nic.mac }}"
+            name: "{{ nic.name }}"
+    - name: Unmount swap
+      ansible.posix.mount:
+        path: none
+        state: unmounted
+    - name: Disable swap
+      ansible.posix.mount:
+        path: none
+        state: absent
+    - name: Create EFI filesystem
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[efi.disk] }}-part{{ efi.partition }}
+        force: false
+        fstype: vfat
+        opts: "-i {{ efi.volid }} -n boot"
+    - name: Create cloudinit filesystem
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[cloudinit.disk] }}-part{{ cloudinit.partition }}
+        force: false
+        fstype: vfat
+        opts: "-i {{ cloudinit.volid }} -n ci"
+    - name: Create filesystem on disk partition
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[item.disk] }}-part{{ item.partition }}
+        force: false
+        fstype: "{{ item.filesystem | default('ext4') }}"
+        opts: "-U {{ item.uuid }}"
+      loop: "{{ diskmount | default([]) }}"
+      loop_control:
+        label: "{{ item.mountpoint }}"
+    - name: Create primary mount points
+      ansible.builtin.file:
+        group: root
+        mode: "0755"
+        owner: root
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /boot/cloudinit
+        - /boot/efi
+    - name: Mount EFI partition
+      ansible.posix.mount:
+        dump: 0
+        fstype: vfat
+        opts: defaults
+        passno: 2
+        path: /boot/efi
+        src: /dev/disk/by-id/nvme-{{ disks[efi.disk] }}-part{{ efi.partition }}
+        state: mounted
+    - name: Mount cloudinit partition
+      ansible.posix.mount:
+        dump: 0
+        fstype: vfat
+        opts: defaults
+        passno: 2
+        path: /boot/cloudinit
+        src: /dev/disk/by-id/nvme-{{ disks[cloudinit.disk] }}-part{{ cloudinit.partition }}
+        state: mounted
+    - name: Mount disk partitions
+      ansible.posix.mount:
+        dump: "{{ item.dump | default(0) }}"
+        fstype: "{{ item.filesystem | default('ext4') }}"
+        opts: "{{ item.options | default('defaults') }}"
+        passno: "{{ item.passno | default(2) }}"
+        path: "{{ item.mountpoint }}"
+        src: /dev/disk/by-id/nvme-{{ disks[item.disk] }}-part{{ item.partition }}
+        state: mounted
+      loop: "{{ diskmount | default([]) }}"
+      loop_control:
+        label: "{{ item.mountpoint }}"
+    - name: Mount tmpfs
+      ansible.posix.mount:
+        dump: 0
+        fstype: tmpfs
+        opts: "{{ item.opts }}"
+        passno: 0
+        path: "{{ item.path }}"
+        src: tmpfs
+        state: mounted
+      loop: "{{ tmpfs | default([]) }}"
+      loop_control:
+        label: "{{ item.path }}"
+    - name: Mount NFS shares
+      ansible.posix.mount:
+        dump: 0
+        fstype: nfs
+        opts: _netdev,nodev,nofail,nosuid,nfsvers=3,proto=tcp,retrans=3,rsize=1048576,soft,timeo=600,wsize=1048576
+        passno: 0
+        path: "{{ item.path }}"
+        src: "{{ item.src }}"
+        state: mounted
+      loop: "{{ nfs | default([]) }}"
+      loop_control:
+        label: "{{ item.path }}"
