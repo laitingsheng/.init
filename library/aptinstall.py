@@ -78,6 +78,8 @@ class APTInstall:
     def prepare(self) -> None:
         apt_pkg.config.set("APT::Install-Recommends", str(self._module.params["install_recommends"]))
         apt_pkg.config.set("APT::Install-Suggests", str(self._module.params["install_suggests"]))
+        apt_pkg.config.set("Dpkg::Options::", "--force-confdef")
+        apt_pkg.config.set("Dpkg::Options::", "--force-confold")
         if self._module.params["update_cache"]:
             self._cache.update()
             self._cache.open()
