@@ -1,5 +1,5 @@
 - name: Configure system
-  hosts: localhost
+  hosts: all
   gather_facts: true
   become: true
   tasks:
@@ -26,6 +26,9 @@
             dhcp6: true
             macaddress: "{{ nic.mac }}"
             name: "{{ nic.name }}"
+            nameservers:
+              search: "{{ dns.search }}"
+      notify: Apply netplan
     - name: Unmount swap
       ansible.posix.mount:
         path: none
@@ -119,3 +122,7 @@
       loop: "{{ nfs | default([]) }}"
       loop_control:
         label: "{{ item.path }}"
+  handlers:
+    - name: Apply netplan
+      ansible.builtin.command:
+        cmd: netplan apply

@@ -1,5 +1,5 @@
 - name: Modify user settings
-  hosts: localhost
+  hosts: all
   gather_facts: true
   become: true
   tasks:
@@ -66,6 +66,28 @@
         manage_dir: true
         state: present
         user: "{{ item.key }}"
+      when: item.value.ssh_keys is defined
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: Fix .ssh directory permissions
+      ansible.builtin.file:
+        path: "{{ item.value.home }}/.ssh"
+        owner: "{{ item.key }}"
+        group: "{{ item.value.group }}"
+        mode: "0700"
+        state: directory
+      when: item.value.ssh_keys is defined
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+    - name: Fix authorized_keys permissions
+      ansible.builtin.file:
+        path: "{{ item.value.home }}/.ssh/authorized_keys"
+        owner: "{{ item.key }}"
+        group: "{{ item.value.group }}"
+        mode: "0600"
+        state: file
       when: item.value.ssh_keys is defined
       loop: "{{ users | dict2items }}"
       loop_control:

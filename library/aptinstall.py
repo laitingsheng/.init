@@ -120,12 +120,12 @@ class APTInstall:
                 for pkg in self._cache:
                     if self._purge_regex.fullmatch(pkg.name):
                         self._manual_after.discard(pkg.name)
-                        pkg.mark_delete(purge=True)
+                        pkg.mark_delete(auto_fix=False, purge=True)
             for name in self._module.params["purge"]:
                 pkg = self._cache.get(name)
                 if pkg:
                     self._manual_after.discard(pkg.name)
-                    pkg.mark_delete(purge=True)
+                    pkg.mark_delete(auto_fix=False, purge=True)
                 else:
                     unknown.append(name)
         if unknown:

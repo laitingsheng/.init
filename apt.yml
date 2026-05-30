@@ -1,183 +1,279 @@
 - name: Configure APT
-  hosts: localhost
+  hosts: all
   gather_facts: true
   become: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
     version:
+      cuda: 13-3
       kubernetes: 1.33
+      llvm: 20
       nodejs: 22
+      postgres: 18
+    cuda_keys:
+      noble: 3bf863cc.pub
+      resolute: 60DF8A40.pub
     url:
-      ubuntu: https://nvidia.archive.ubuntu.com/ubuntu
+      cuda: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ ansible_distribution_version | replace('.', '') }}/{{ ansible_architecture }}"
       docker: https://download.docker.com/linux/ubuntu
-      githubcli: https://cli.github.com/packages
       fluentbit: https://packages.fluentbit.io
+      githubcli: https://cli.github.com/packages
       hashicorp: https://apt.releases.hashicorp.com
       helm: https://packages.buildkite.com/helm-linux/helm-debian
       kubernetes: "https://pkgs.k8s.io/core:/stable:/v{{ version.kubernetes }}/deb"
-      microsoft: https://packages.microsoft.com
+      llvm: https://apt.llvm.org
+      mise: https://mise.jdx.dev
       nodesource: https://deb.nodesource.com
       perforce: https://package.perforce.com
       postgresql: https://apt.postgresql.org/pub/repos/apt
-    keys:
-      - name: docker
-        url: "{{ url.docker }}/gpg"
-      - name: fluentbit
-        url: "{{ url.fluentbit }}/fluentbit.key"
-      - name: githubcli
-        url: "{{ url.githubcli }}/githubcli-archive-keyring.gpg"
-        suffix: gpg
-      - name: hashicorp
-        url: "{{ url.hashicorp }}/gpg"
-      - name: helm
-        url: "{{ url.helm }}/gpgkey"
-      - name: kubernetes
-        url: "{{ url.kubernetes }}/Release.key"
-      - name: microsoft
-        url: "{{ url.microsoft }}/keys/microsoft.asc"
-      - name: nodejs
-        url: "{{ url.nodesource }}/gpgkey/nodesource-repo.gpg.key"
-      - name: perforce
-        url: "{{ url.perforce }}/perforce.pubkey"
-      - name: postgresql
-        url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
-      - name: ubuntu
-        path: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-    repos:
-      - name: docker
-        url: "{{ url.docker }}"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - stable
-      - name: fluentbit
-        url: "{{ url.fluentbit }}/ubuntu/{{ ansible_distribution_release }}"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - main
-      - name: githubcli
-        url: "{{ url.githubcli }}"
-        keyring_suffix: gpg
-        distributions:
-          - stable
-        components:
-          - main
-      - name: hashicorp
-        url: "{{ url.hashicorp }}"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - main
-      - name: helm
-        url: "{{ url.helm }}/any"
-        distributions:
-          - any
-        components:
-          - main
-      - name: kubernetes
-        url: "{{ url.kubernetes }}"
-        distributions:
-          - /
-      - name: microsoft
-        url: "{{ url.microsoft }}/ubuntu/{{ ansible_distribution_version }}/prod"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - main
-      - name: microsoft
-        url: "{{ url.microsoft }}/repos/azure-cli"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - main
-      - name: microsoft
-        url: "{{ url.microsoft }}/repos/code"
-        distributions:
-          - stable
-        components:
-          - main
-      - name: microsoft
-        url: "{{ url.microsoft }}/repos/edge"
-        distributions:
-          - stable
-        components:
-          - main
-      - name: nodejs
-        url: "{{ url.nodesource }}/node_{{ version.nodejs }}.x"
-        distributions:
-          - nodistro
-        components:
-          - main
-      - name: perforce
-        url: "{{ url.perforce }}/apt/ubuntu"
-        distributions:
-          - "{{ ansible_distribution_release }}"
-        components:
-          - release
-      - name: postgresql
-        url: "{{ url.postgresql }}"
-        distributions:
-          - "{{ ansible_distribution_release }}-pgdg"
-        components:
-          - main
-      - name: ubuntu
-        url: "{{ url.ubuntu }}"
-        keypath: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-        distributions:
-          - "{{ ansible_distribution_release }}"
-          - "{{ ansible_distribution_release }}-backports"
-          - "{{ ansible_distribution_release }}-proposed"
-          - "{{ ansible_distribution_release }}-security"
-          - "{{ ansible_distribution_release }}-updates"
-        components:
-          - main
-          - restricted
-          - universe
-          - multiverse
-  tasks:
-    - name: Configure APT keyrings
-      aptkey:
-        keys: "{{ keys }}"
-    - name: Configure APT repositories
-      aptrepository:
-        repositories: "{{ repos }}"
-        update_cache: true
-    - name: Install and configure APT packages
-      environment:
-        DEBIAN_FRONTEND: noninteractive
-      aptinstall:
-        install:
+      redis: https://packages.redis.io/deb
+      ubuntu: https://nvidia.archive.ubuntu.com/ubuntu
+    profiles:
+      repositories:
+        ubuntu:
+          apt_keys:
+            - name: ubuntu
+              path: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+          apt_repos:
+            - name: ubuntu
+              url: "{{ url.ubuntu }}"
+              keypath: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+              distributions:
+                - "{{ ansible_distribution_release }}"
+                - "{{ ansible_distribution_release }}-backports"
+                - "{{ ansible_distribution_release }}-proposed"
+                - "{{ ansible_distribution_release }}-security"
+                - "{{ ansible_distribution_release }}-updates"
+              components:
+                - main
+                - restricted
+                - universe
+                - multiverse
+        cuda:
+          apt_keys:
+            - name: cuda
+              url: "{{ url.cuda }}/{{ cuda_keys[ansible_distribution_release] }}"
+          apt_repos:
+            - name: cuda
+              url: "{{ url.cuda }}"
+              distributions:
+                - /
+        docker:
+          apt_keys:
+            - name: docker
+              url: "{{ url.docker }}/gpg"
+          apt_repos:
+            - name: docker
+              url: "{{ url.docker }}"
+              distributions:
+                - "{{ ansible_distribution_release }}"
+              components:
+                - stable
+        fluentbit:
+          apt_keys:
+            - name: fluentbit
+              url: "{{ url.fluentbit }}/fluentbit.key"
+          apt_repos:
+            - name: fluentbit
+              url: "{{ url.fluentbit }}/ubuntu/{{ ansible_distribution_release }}"
+              distributions:
+                - "{{ ansible_distribution_release }}"
+              components:
+                - main
+        github:
+          apt_keys:
+            - name: githubcli
+              url: "{{ url.githubcli }}/githubcli-archive-keyring.gpg"
+              suffix: gpg
+          apt_repos:
+            - name: githubcli
+              url: "{{ url.githubcli }}"
+              keyring_suffix: gpg
+              distributions:
+                - stable
+              components:
+                - main
+        hashicorp:
+          apt_keys:
+            - name: hashicorp
+              url: "{{ url.hashicorp }}/gpg"
+          apt_repos:
+            - name: hashicorp
+              url: "{{ url.hashicorp }}"
+              distributions:
+                - "{{ ansible_distribution_release }}"
+              components:
+                - main
+        helm:
+          apt_keys:
+            - name: helm
+              url: "{{ url.helm }}/gpgkey"
+          apt_repos:
+            - name: helm
+              url: "{{ url.helm }}/any"
+              distributions:
+                - any
+              components:
+                - main
+        kubernetes:
+          apt_keys:
+            - name: kubernetes
+              url: "{{ url.kubernetes }}/Release.key"
+          apt_repos:
+            - name: kubernetes
+              url: "{{ url.kubernetes }}"
+              distributions:
+                - /
+        llvm:
+          apt_keys:
+            - name: llvm
+              url: "{{ url.llvm }}/llvm-snapshot.gpg.key"
+          apt_repos:
+            - name: llvm
+              url: "{{ url.llvm }}/{{ ansible_distribution_release }}"
+              distributions:
+                - llvm-toolchain-{{ ansible_distribution_release }}-{{ version.llvm }}
+              components:
+                - main
+        mise:
+          apt_keys:
+            - name: mise
+              url: "{{ url.mise }}/gpg-key.pub"
+          apt_repos:
+            - name: mise
+              url: "{{ url.mise }}/deb"
+              distributions:
+                - stable
+              components:
+                - main
+        nodejs:
+          apt_keys:
+            - name: nodejs
+              url: "{{ url.nodesource }}/gpgkey/nodesource-repo.gpg.key"
+          apt_repos:
+            - name: nodejs
+              url: "{{ url.nodesource }}/node_{{ version.nodejs }}.x"
+              distributions:
+                - nodistro
+              components:
+                - main
+        perforce:
+          apt_keys:
+            - name: perforce
+              url: "{{ url.perforce }}/perforce.pubkey"
+          apt_repos:
+            - name: perforce
+              url: "{{ url.perforce }}/apt/ubuntu"
+              distributions:
+                - "{{ ansible_distribution_release }}"
+              components:
+                - release
+        postgresql:
+          apt_keys:
+            - name: postgresql
+              url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          apt_repos:
+            - name: postgresql
+              url: "{{ url.postgresql }}"
+              distributions:
+                - "{{ ansible_distribution_release }}-pgdg"
+              components:
+                - main
+        redis:
+          apt_keys:
+            - name: redis
+              url: https://packages.redis.io/gpg
+          apt_repos:
+            - name: redis
+              url: "{{ url.redis }}"
+              distributions:
+                - "{{ ansible_distribution_release }}"
+              components:
+                - main
+      packages:
+        ubuntu:
           - grub-efi
           - linux-generic-hwe-{{ ansible_distribution_version }}
           - ubuntu-minimal
           - ubuntu-standard
           - ubuntu-server
+        cuda:
+          - cuda-toolkit-{{ version.cuda }}
+          - cuda-drivers
+          - nvidia-container-toolkit
+        docker:
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose
+        fluentbit:
+          - fluent-bit
+        github:
+          - gh
+        helm:
+          - helm
+        kubectl:
+          - kubectl
+        llvm:
+          - clang
+          - clang-{{ version.llvm }}
+          - clang-format
+          - clang-format-{{ version.llvm }}
+          - clang-tidy
+          - clang-tidy-{{ version.llvm }}
+          - clang-tools
+          - clang-tools-{{ version.llvm }}
+          - clangd
+          - clangd-{{ version.llvm }}
+        mise:
+          - mise
+        nodejs:
+          - nodejs
+        perforce:
+          - p4-cli
+        postgres:
+          - postgresql-{{ version.postgres }}
+          - postgresql-{{ version.postgres }}-cron
+          - postgresql-{{ version.postgres }}-hypopg
+          - postgresql-{{ version.postgres }}-jsquery
+          - postgresql-{{ version.postgres }}-partman
+          - postgresql-{{ version.postgres }}-pgaudit
+          - postgresql-{{ version.postgres }}-pgvector
+          - postgresql-{{ version.postgres }}-pg-stat-kcache
+          - postgresql-{{ version.postgres }}-pllua
+          - postgresql-{{ version.postgres }}-repack
+          - postgresql-{{ version.postgres }}-semver
+          - postgresql-{{ version.postgres }}-squeeze
+          - postgresql-{{ version.postgres }}-timescaledb
+          - postgresql-{{ version.postgres }}-toastinfo
+          - postgresql-{{ version.postgres }}-wal2json
+        postgres-client:
+          - postgresql-client
+        redis:
+          - redis
+        terraform:
+          - terraform
+        vault:
+          - vault
+        workstation:
           - acl
           - ansible-lint
           - aria2
           - bat
           - cpuinfo
           - crudini
-          - docker-ce
-          - docker-ce-cli
-          - docker-compose
           - enca
           - errno
           - expect
-          - fluent-bit
-          - gh
           - git-all
           - git-lfs
           - grepcidr
-          - helm
           - httpie
           - imagemagick
           - ifupdown-extra
           - inotify-tools
-          - kubectl
           - language-pack-en
           - libdpkg-dev
+          - libflatpak-dev
           - librpm-dev
           - libssh-dev
           - libuser
@@ -187,14 +283,12 @@
           - neofetch
           - net-tools
           - nfs-common
-          - nodejs
           - optipng
           - p7zip-full
           - packaging-dev
           - parallel
           - patchelf
           - podman-toolbox
-          - postgresql-client
           - pylint
           - python3-all-dev
           - python3-apt
@@ -216,12 +310,35 @@
           - python3-sshtunnel
           - python3-toml
           - python3-yaml
-          - terraform
+          - python3-z3
+          - rustup
+          - shfmt
           - tree
-          - vault
           - webp
           - yq
           - zsh
+  tasks:
+    - name: Configure APT keyrings
+      aptkey:
+        keys: >-
+          {{
+            apt.repositories | default([]) | map('extract', profiles.repositories) | map(attribute='apt_keys') | flatten | list
+          }}
+    - name: Configure APT repositories
+      aptrepository:
+        update_cache: true
+        repositories: >-
+          {{
+            apt.repositories | default([]) | map('extract', profiles.repositories) | map(attribute='apt_repos') | flatten | list
+          }}
+    - name: Install and configure APT packages
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      aptinstall:
+        install: >-
+          {{
+            apt.packages | default([]) | map('extract', profiles.packages) | flatten | list
+          }}
         purge:
           - cachefilesd
           - mdatp

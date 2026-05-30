@@ -1,17 +1,20 @@
 - name: Configure UFW firewall
-  hosts: localhost
+  hosts: all
   gather_facts: false
   become: true
   tasks:
     - name: Reset UFW
       community.general.ufw:
         state: reset
-    - name: Apply firewall rules
+      when: ufw.reset | default(false)
+    - name: Set default incoming policy to deny
       community.general.ufw:
-        direction: in
-        rule: allow
-        port: "{{ item }}"
-      loop: "{{ ufw }}"
+        default: deny
+        direction: incoming
+    - name: Set default outgoing policy to allow
+      community.general.ufw:
+        default: allow
+        direction: outgoing
     - name: Apply loopback rules
       community.general.ufw:
         direction: "{{ item.direction | default(omit) }}"
@@ -38,14 +41,12 @@
         - direction: out
           to_ip: ::1
           rule: deny
-    - name: Set default incoming policy to deny
+    - name: Apply firewall rules
       community.general.ufw:
-        default: deny
-        direction: incoming
-    - name: Set default outgoing policy to allow
-      community.general.ufw:
-        default: allow
-        direction: outgoing
+        direction: in
+        rule: allow
+        port: "{{ item }}"
+      loop: "{{ ufw.services | default([]) }}"
     - name: Enable UFW
       community.general.ufw:
         state: enabled

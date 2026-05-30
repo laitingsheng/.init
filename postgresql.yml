@@ -1,0 +1,33 @@
+- name: Configure PostgreSQL clusters
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    postgresql_defaults:
+      datadir: /var/lib/postgresql
+  pre_tasks:
+    - name: Skip hosts without PostgreSQL configuration
+      ansible.builtin.meta: end_host
+      when: postgresql is not defined
+  tasks:
+    - name: Drop PostgreSQL clusters
+      ansible.builtin.command:
+        cmd: pg_dropcluster --stop {{ item.version }} {{ item.name }}
+        removes: "{{ datadir }}/PG_VERSION"
+      loop: "{{ postgresql.delete | default([]) }}"
+      loop_control:
+        label: "{{ item.version }}/{{ item.name }}"
+      vars:
+        datadir: "{{ item.datadir | default(postgresql_defaults.datadir ~ '/' ~ item.version ~ '/' ~ item.name) }}"
+    - name: Create PostgreSQL clusters
+      ansible.builtin.command:
+        cmd: pg_createcluster --user {{ user }} --group {{ group }} --locale {{ locale }} --datadir {{ datadir }} {{ item.version }} {{ item.name }} --start
+        creates: "{{ datadir }}/PG_VERSION"
+      loop: "{{ postgresql.create | default([]) }}"
+      loop_control:
+        label: "{{ item.version }}/{{ item.name }}"
+      vars:
+        user: "{{ item.user | default('postgres') }}"
+        group: "{{ item.group | default('postgres') }}"
+        locale: "{{ item.locale | default('C.UTF-8') }}"
+        datadir: "{{ item.datadir | default(postgresql_defaults.datadir ~ '/' ~ item.version ~ '/' ~ item.name) }}"
