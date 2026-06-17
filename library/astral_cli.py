@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import http
 import io
+import os
 import tarfile
 from pathlib import Path
 from typing import Final
@@ -15,12 +16,30 @@ TOOL_BINARIES: Final[dict[str, list[str]]] = {
 }
 
 
+def _default_share_dir() -> Path:
+    if os.geteuid() == 0:
+        return Path("/usr/local/share")
+    xdg_data = os.environ.get("XDG_DATA_HOME")
+    if xdg_data:
+        return Path(xdg_data)
+    return Path.home() / ".local" / "share"
+
+
+def _default_bin_dir() -> Path:
+    if os.geteuid() == 0:
+        return Path("/usr/local/bin")
+    xdg_bin = os.environ.get("XDG_BIN_HOME")
+    if xdg_bin:
+        return Path(xdg_bin)
+    return Path.home() / ".local" / "bin"
+
+
 def main() -> None:
     module = AnsibleModule(
         argument_spec={
             "tool": {"type": "str", "required": True, "choices": list(TOOL_BINARIES)},
-            "install_base": {"type": "path", "default": "/usr/local/astral"},
-            "bin_dir": {"type": "path", "default": "/usr/local/bin"},
+            "share_dir": {"type": "path", "default": None},
+            "bin_dir": {"type": "path", "default": None},
             "version": {"type": "str", "required": True},
             "arch": {"type": "str", "required": True},
             "platform": {"type": "str", "required": True},
@@ -37,12 +56,11 @@ def main() -> None:
     os_name = module.params["os"]
     abi = module.params["abi"]
     force = module.params["force"]
-    install_base = Path(module.params["install_base"])
-    bin_dir = Path(module.params["bin_dir"])
+    share_dir = Path(module.params["share_dir"]) if module.params["share_dir"] else _default_share_dir()
+    bin_dir = Path(module.params["bin_dir"]) if module.params["bin_dir"] else _default_bin_dir()
     binaries = TOOL_BINARIES[tool]
 
-    tool_dir = install_base / tool
-    version_dir = tool_dir / version
+    version_dir = share_dir / tool / "versions" / version
     binary_paths = [version_dir / binary for binary in binaries]
     links = [bin_dir / binary for binary in binaries]
 
@@ -60,12 +78,7 @@ def main() -> None:
     if info["status"] != http.HTTPStatus.OK:
         module.fail_json(**info)
 
-    install_base.mkdir(exist_ok=True)
-    install_base.chmod(0o755)
-    tool_dir.mkdir(exist_ok=True)
-    tool_dir.chmod(0o755)
-    version_dir.mkdir(exist_ok=True)
-    version_dir.chmod(0o755)
+    version_dir.mkdir(parents=True, exist_ok=True)
     archive_prefix = f"{tool}-{target_triple}"
     with tarfile.open(fileobj=io.BytesIO(response.read())) as tar:
         for binary, binary_path in zip(binaries, binary_paths):
@@ -75,6 +88,7 @@ def main() -> None:
             binary_path.write_bytes(extracted.read())
             binary_path.chmod(0o755)
 
+    bin_dir.mkdir(parents=True, exist_ok=True)
     for link, binary_path in zip(links, binary_paths):
         link.unlink(missing_ok=True)
         link.symlink_to(binary_path.relative_to(bin_dir, walk_up=True))

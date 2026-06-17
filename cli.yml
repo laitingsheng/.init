@@ -1,32 +1,36 @@
 - name: Install CLI tools
   hosts: all
   gather_facts: false
-  become: true
   tasks:
     - name: Install GitLab CLI
       glab_cli:
-        version: "1.100.0"
+        version: "1.102.0"
         os: linux
         arch: amd64
     - name: Install Rancher CLI
       rancher_cli:
-        version: "2.14.1"
+        version: "2.14.2"
         os: linux
         arch: amd64
     - name: Install Claude CLI
       claude_cli:
-        version: "2.1.154"
+        version: "2.1.170"
         os: linux
         arch: x64
+    - name: Install Codex CLI
+      codex_cli:
+        version: "0.139.0"
+        os: linux
+        arch: x86_64
     - name: Install Cursor CLI
       cursor_cli:
-        version: "2026.05.27-fe9a6e2"
+        version: "2026.06.04-5fd875e"
         os: linux
         arch: x64
     - name: Install uv
       astral_cli:
         tool: uv
-        version: "0.11.16"
+        version: "0.11.19"
         arch: x86_64
         platform: unknown
         os: linux
@@ -34,7 +38,7 @@
     - name: Install ruff
       astral_cli:
         tool: ruff
-        version: "0.15.14"
+        version: "0.15.16"
         arch: x86_64
         platform: unknown
         os: linux
@@ -42,7 +46,7 @@
     - name: Install ty
       astral_cli:
         tool: ty
-        version: "0.0.39"
+        version: "0.0.46"
         arch: x86_64
         platform: unknown
         os: linux
@@ -52,17 +56,18 @@
         version: "2.14.0"
         os: linux
         arch: amd64
+    - name: Install prek
+      prek_cli:
+        version: "0.4.4"
+        os: linux
+        arch: x86_64
     - name: Install Helm push plugin
       helm_push_plugin:
-        prefix: ~/.local/share/helm/plugins
         version: "0.11.1"
         os: linux
         arch: amd64
-      become: false
     - name: Install Helm diff plugin
       helm_diff_plugin:
-        prefix: ~/.local/share/helm/plugins
-        version: "3.15.7"
+        version: "3.15.8"
         os: linux
         arch: amd64
-      become: false
