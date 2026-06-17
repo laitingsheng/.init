@@ -1,0 +1,19 @@
+- name: Configure services
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Disable inactive state targets
+      ansible.builtin.systemd_service:
+        daemon_reexec: false
+        daemon_reload: false
+        enabled: false
+        masked: true
+        name: "{{ item }}.target"
+        scope: system
+        state: stopped
+      loop:
+        - hibernate
+        - hybrid-sleep
+        - sleep
+        - suspend

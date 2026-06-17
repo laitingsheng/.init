@@ -1,0 +1,26 @@
+- name: Configure disks
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Create EFI filesystem
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[efi.disk] }}-part{{ efi.partition }}
+        force: false
+        fstype: vfat
+        opts: "-i {{ efi.volid }} -n boot"
+    - name: Create cloudinit filesystem
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[cloudinit.disk] }}-part{{ cloudinit.partition }}
+        force: false
+        fstype: vfat
+        opts: "-i {{ cloudinit.volid }} -n ci"
+    - name: Create filesystem on disk partition
+      community.general.filesystem:
+        dev: /dev/disk/by-id/nvme-{{ disks[item.disk] }}-part{{ item.partition }}
+        force: false
+        fstype: "{{ item.filesystem | default('ext4') }}"
+        opts: "-U {{ item.uuid }}"
+      loop: "{{ diskmount | default([]) }}"
+      loop_control:
+        label: "{{ item.mountpoint }}"

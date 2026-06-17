@@ -1,34 +1,8 @@
-- name: Configure system
+- name: Configure mounts
   hosts: all
   gather_facts: true
   become: true
   tasks:
-    - name: Disable inactive state targets
-      ansible.builtin.systemd_service:
-        daemon_reexec: false
-        daemon_reload: false
-        enabled: false
-        masked: true
-        name: "{{ item }}.target"
-        scope: system
-        state: stopped
-      loop:
-        - hibernate
-        - hybrid-sleep
-        - sleep
-        - suspend
-    - name: Configure network
-      netplan:
-        ethernets:
-          - addresses:
-              - "{{ nic.ip }}/{{ nic.prefix }}"
-            dhcp4: true
-            dhcp6: true
-            macaddress: "{{ nic.mac }}"
-            name: "{{ nic.name }}"
-            nameservers:
-              search: "{{ dns.search }}"
-      notify: Apply netplan
     - name: Unmount swap
       ansible.posix.mount:
         path: none
@@ -37,27 +11,6 @@
       ansible.posix.mount:
         path: none
         state: absent
-    - name: Create EFI filesystem
-      community.general.filesystem:
-        dev: /dev/disk/by-id/nvme-{{ disks[efi.disk] }}-part{{ efi.partition }}
-        force: false
-        fstype: vfat
-        opts: "-i {{ efi.volid }} -n boot"
-    - name: Create cloudinit filesystem
-      community.general.filesystem:
-        dev: /dev/disk/by-id/nvme-{{ disks[cloudinit.disk] }}-part{{ cloudinit.partition }}
-        force: false
-        fstype: vfat
-        opts: "-i {{ cloudinit.volid }} -n ci"
-    - name: Create filesystem on disk partition
-      community.general.filesystem:
-        dev: /dev/disk/by-id/nvme-{{ disks[item.disk] }}-part{{ item.partition }}
-        force: false
-        fstype: "{{ item.filesystem | default('ext4') }}"
-        opts: "-U {{ item.uuid }}"
-      loop: "{{ diskmount | default([]) }}"
-      loop_control:
-        label: "{{ item.mountpoint }}"
     - name: Create primary mount points
       ansible.builtin.file:
         group: root
@@ -122,7 +75,3 @@
       loop: "{{ nfs | default([]) }}"
       loop_control:
         label: "{{ item.path }}"
-  handlers:
-    - name: Apply netplan
-      ansible.builtin.command:
-        cmd: netplan apply

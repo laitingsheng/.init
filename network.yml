@@ -1,0 +1,21 @@
+- name: Configure network
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Configure network
+      netplan:
+        ethernets:
+          - addresses:
+              - "{{ nic.ip }}/{{ nic.prefix }}"
+            dhcp4: true
+            dhcp6: true
+            macaddress: "{{ nic.mac }}"
+            name: "{{ nic.name }}"
+            nameservers:
+              search: "{{ dns.search }}"
+      notify: Apply netplan
+  handlers:
+    - name: Apply netplan
+      ansible.builtin.command:
+        cmd: netplan apply

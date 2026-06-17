@@ -5,15 +5,16 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
     version:
-      cuda: 13-3
+      cuda: 13-2
       kubernetes: 1.33
       llvm: 20
       nodejs: 22
-      postgres: 18
+      postgresql: 18
     cuda_keys:
       noble: 3bf863cc.pub
       resolute: 60DF8A40.pub
     url:
+      atlassian: https://acli.atlassian.com
       cuda: "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu{{ ansible_distribution_version | replace('.', '') }}/{{ ansible_architecture }}"
       docker: https://download.docker.com/linux/ubuntu
       fluentbit: https://packages.fluentbit.io
@@ -49,6 +50,17 @@
                 - restricted
                 - universe
                 - multiverse
+        atlassian:
+          apt_keys:
+            - name: atlassian
+              url: "{{ url.atlassian }}/gpg/public-key.asc"
+          apt_repos:
+            - name: atlassian
+              url: "{{ url.atlassian }}/linux/deb"
+              distributions:
+                - stable
+              components:
+                - main
         cuda:
           apt_keys:
             - name: cuda
@@ -197,6 +209,8 @@
           - ubuntu-minimal
           - ubuntu-standard
           - ubuntu-server
+        atlassian:
+          - acli
         cuda:
           - cuda-toolkit-{{ version.cuda }}
           - cuda-drivers
@@ -230,23 +244,24 @@
           - nodejs
         perforce:
           - p4-cli
-        postgres:
-          - postgresql-{{ version.postgres }}
-          - postgresql-{{ version.postgres }}-cron
-          - postgresql-{{ version.postgres }}-hypopg
-          - postgresql-{{ version.postgres }}-jsquery
-          - postgresql-{{ version.postgres }}-partman
-          - postgresql-{{ version.postgres }}-pgaudit
-          - postgresql-{{ version.postgres }}-pgvector
-          - postgresql-{{ version.postgres }}-pg-stat-kcache
-          - postgresql-{{ version.postgres }}-pllua
-          - postgresql-{{ version.postgres }}-repack
-          - postgresql-{{ version.postgres }}-semver
-          - postgresql-{{ version.postgres }}-squeeze
-          - postgresql-{{ version.postgres }}-timescaledb
-          - postgresql-{{ version.postgres }}-toastinfo
-          - postgresql-{{ version.postgres }}-wal2json
-        postgres-client:
+        postgresql:
+          - postgresql-{{ version.postgresql }}
+          - postgresql-{{ version.postgresql }}-cron
+          - postgresql-{{ version.postgresql }}-hypopg
+          - postgresql-{{ version.postgresql }}-jsquery
+          - postgresql-{{ version.postgresql }}-partman
+          - postgresql-{{ version.postgresql }}-pgaudit
+          - postgresql-{{ version.postgresql }}-pgvector
+          - postgresql-{{ version.postgresql }}-pg-stat-kcache
+          - postgresql-{{ version.postgresql }}-pllua
+          - postgresql-{{ version.postgresql }}-repack
+          - postgresql-{{ version.postgresql }}-semver
+          - postgresql-{{ version.postgresql }}-squeeze
+          - postgresql-{{ version.postgresql }}-timescaledb
+          - postgresql-{{ version.postgresql }}-toastinfo
+          - postgresql-{{ version.postgresql }}-wal2json
+          - postgresql-server-dev-{{ version.postgresql }}
+        postgresql-client:
           - postgresql-client
         redis:
           - redis
@@ -369,6 +384,7 @@
           - "network-manager*"
           - "printer*"
           - "qt*"
+          - "snap*"
           - "xfont*"
           - "xinit*"
           - "xinput*"

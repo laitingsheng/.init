@@ -43,7 +43,7 @@
         move_home: false
         name: "{{ item.key }}"
         password: "!"
-        shell: /usr/bin/zsh
+        shell: "{{ item.value.shell | default('/bin/bash') }}"
         system: false
         uid: "{{ item.value.uid | default(omit) }}"
         umask: "027"
